@@ -1,0 +1,31 @@
+<h1>💊 Medicine Station</h1>
+
+<input id="name" placeholder="Medicine">
+<input id="dose" placeholder="Dosage">
+<input id="interval" placeholder="Interval">
+
+<button onclick="add()">Add</button>
+
+<div id="alerts"></div>
+
+<script>
+const API="http://localhost:3000";
+
+async function add(){
+ await fetch(API+"/medicine",{method:"POST",
+ headers:{"Content-Type":"application/json"},
+ body:JSON.stringify({
+  name:name.value,
+  dosage:dose.value,
+  interval:interval.value
+ })});
+}
+
+async function load(){
+ const d=await fetch(API+"/medicine-reminders").then(r=>r.json());
+ alerts.innerHTML=d.map(a=>a.message).join("<br>");
+}
+
+setInterval(load,2000);
+load();
+</script>

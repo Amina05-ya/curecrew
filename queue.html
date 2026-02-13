@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Queue Tracker</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#eef4fb;
+padding:20px;
+}
+
+h2{text-align:center;}
+
+.card{
+background:white;
+padding:20px;
+border-radius:12px;
+margin:auto;
+width:460px;
+box-shadow:0 4px 12px rgba(0,0,0,.1);
+}
+
+.big{
+font-size:28px;
+font-weight:bold;
+color:#2e7d32;
+}
+
+.section{
+margin-top:15px;
+}
+
+.tokenCard{
+background:#f5f5f5;
+padding:10px;
+margin:6px 0;
+border-radius:8px;
+}
+
+.current{
+background:#ffccbc;
+font-weight:bold;
+}
+
+</style>
+</head>
+
+<body>
+
+<h2>🔔 Live Queue Status</h2>
+
+<div class="card">
+
+<div id="myStatus"></div>
+
+<div class="section">
+<h3>Tokens Before You</h3>
+<div id="beforeList"></div>
+</div>
+
+</div>
+
+<script>
+
+const API = "http://localhost:3000";
+const token = Number(localStorage.getItem("patientToken"));
+
+let announced = false;
+
+// popup
+function popup(msg){
+alert("🔔 " + msg);
+}
+
+// voice
+function announceTurn(token){
+
+const msg = new SpeechSynthesisUtterance(
+`Token ${token}, please proceed to doctor`
+);
+
+speechSynthesis.speak(msg);
+
+}
+
+// beep
+function beep(){
+
+const ctx = new AudioContext();
+const osc = ctx.createOscillator();
+
+osc.frequency.setValueAtTime(800, ctx.currentTime);
+osc.connect(ctx.destination);
+
+osc.start();
+setTimeout(()=>osc.stop(),300);
+
+}
+
+async function loadQueue(){
+
+if(!token){
+beforeList.innerHTML = "No token found";
+return;
+}
+
+// fetch queue
+const queue = await fetch(API + "/queue")
+.then(r=>r.json());
+
+// fetch my status
+const my = await fetch(
+API + "/patient/" + token
+).then(r=>r.json());
+
+// ===================
+// 🔔 TURN ALERT LOGIC
+// ===================
+
+if(my.position === 1 && !announced){
+
+popup("It's your turn now!");
+
+announceTurn(my.token);
+beep();
+
+announced = true;
+
+}
+
+// reset when position changes
+if(my.position !== 1){
+announced = false;
+}
+
+// ===================
+// UI UPDATE
+// ===================
+
+const myIndex = queue.findIndex(
+p => p.token === token
+);
+
+myStatus.innerHTML = `
+
+🎟 Token: <span class="big">${my.token}</span><br>
+📍 Position: ${my.position}<br>
+⏱ Estimated Wait: ${my.estimated_wait_minutes} mins<br>
+👨‍⚕️ Doctor: ${my.doctorStatus}
+
+`;
+
+const before =
+myIndex > 0 ? queue.slice(0, myIndex) : [];
+
+beforeList.innerHTML =
+
+before.length === 0
+
+? `<div class="tokenCard current">
+✅ You are next!
+</div>`
+
+: before.map((p,i)=>`
+
+<div class="tokenCard">
+
+🎟 Token ${p.token}<br>
+📍 Position: ${i+1}<br>
+🔄 Waiting...
+
+</div>
+
+`).join("");
+
+}
+
+// live refresh
+setInterval(loadQueue, 2000);
+loadQueue();
+
+</script>
+
+
+</body>
+</html> 

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Patient History + Medicine Reminder</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#eef4fb;
+padding:20px;
+}
+
+h2{
+text-align:center;
+}
+
+.card{
+background:white;
+padding:15px;
+border-radius:10px;
+margin:10px auto;
+width:420px;
+box-shadow:0 2px 6px rgba(0,0,0,.1);
+}
+
+input,button{
+width:100%;
+padding:10px;
+margin:6px 0;
+border-radius:6px;
+border:1px solid #ccc;
+}
+
+button{
+background:#2196f3;
+color:white;
+cursor:pointer;
+}
+
+.medicine{
+background:#e3f2fd;
+}
+
+</style>
+</head>
+
+<body>
+
+<h2>📜 Patient Medical History</h2>
+
+<div id="history"></div>
+
+<h2>💊 Add Medicine Reminder</h2>
+
+<div class="card">
+
+<input id="medName" placeholder="Medicine name">
+
+<input id="medDose" placeholder="Dosage (ex: 500mg)">
+
+<input id="medInterval" type="number"
+placeholder="Interval in minutes">
+
+<button onclick="addMedicine()">
+➕ Add Medicine Reminder
+</button>
+
+</div>
+
+<h2>💊 Medicine Reminders</h2>
+
+<div id="medList"></div>
+
+<script>
+
+const API="http://localhost:3000";
+
+let spoken=[];
+
+// ---------- voice helper ----------
+
+function speak(text){
+
+const msg=new SpeechSynthesisUtterance(text);
+speechSynthesis.speak(msg);
+
+}
+
+// ---------- add medicine ----------
+
+async function addMedicine(){
+
+const name=medName.value;
+const dosage=medDose.value;
+const interval=medInterval.value;
+
+if(!name || !dosage || !interval){
+alert("Fill all fields");
+return;
+}
+
+await fetch(API+"/medicine",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+name,
+dosage,
+interval
+})
+});
+
+medName.value="";
+medDose.value="";
+medInterval.value="";
+
+loadMedicines();
+
+}
+
+// ---------- load medicines ----------
+
+async function loadMedicines(){
+
+const meds=await fetch(API+"/medicines")
+.then(r=>r.json());
+
+if(!meds.length){
+medList.innerHTML=
+`<div class="card">No medicines yet</div>`;
+return;
+}
+
+medList.innerHTML=meds.map(m=>`
+
+<div class="card medicine">
+
+💊 ${m.name}<br>
+Dosage: ${m.dosage}<br>
+Interval: every ${m.interval} min<br>
+Status: ${m.status}
+
+<button onclick="markTaken('${m.id}')">
+✅ Mark Taken
+</button>
+
+</div>
+
+`).join("");
+
+}
+
+// ---------- mark taken ----------
+
+async function markTaken(id){
+
+await fetch(API+"/medicine/taken/"+id,{
+method:"POST"
+});
+
+loadMedicines();
+
+}
+
+// ---------- check reminders ----------
+
+async function checkReminders(){
+
+const list=await fetch(API+
+"/medicine-reminders")
+.then(r=>r.json());
+
+list.forEach(r=>{
+
+const id=r.medicine+r.time;
+
+if(!spoken.includes(id)){
+
+alert("💊 "+r.message);
+speak(r.message);
+
+spoken.push(id);
+
+}
+
+});
+
+}
+
+// ---------- demo history ----------
+
+function loadHistory(){
+
+history.innerHTML=`
+
+<div class="card">
+Disease: Fever<br>
+Treatment: Antibiotics<br>
+Doctor: Dr. Sharma
+</div>
+
+<div class="card">
+Disease: Cold<br>
+Treatment: Rest + Fluids<br>
+Doctor: Dr. Meena
+</div>
+
+`;
+
+}
+
+// ---------- live loop ----------
+
+setInterval(()=>{
+loadMedicines();
+checkReminders();
+},5000);
+
+// initial load
+loadHistory();
+loadMedicines();
+
+</script>
+
+</body>
+</html>

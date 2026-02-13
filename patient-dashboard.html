@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>🧠 Patient Dashboard</title>
+
+<style>
+
+body {
+  font-family: Arial;
+  background:#eef4fb;
+  padding:20px;
+  text-align:center;
+}
+
+h1 {
+  color:#1f4fa3;
+}
+
+.card {
+  background:white;
+  padding:25px;
+  margin:20px auto;
+  width:300px;
+  border-radius:12px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.1);
+  cursor:pointer;
+  font-size:18px;
+  transition:0.2s;
+}
+
+.card:hover {
+  transform:scale(1.05);
+}
+
+.appointment { border-left:6px solid #4CAF50; }
+.queue { border-left:6px solid #2196F3; }
+.history { border-left:6px solid #ff9800; }
+
+</style>
+</head>
+
+<body>
+
+<h1>🧠 Patient Dashboard</h1>
+
+<div class="card appointment"
+onclick="location='appointment.html'">
+📅 Appointment Booking
+</div>
+
+<div class="card queue"
+onclick="location='queue.html'">
+🔔 Queue Detector
+</div>
+
+<div class="card history"
+onclick="location='history.html'">
+📜 Medical History
+</div>
+
+</body>
+</html>

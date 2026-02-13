@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>🏥 Smart Hospital Signup</title>
+
+<style>
+
+body {
+  font-family: Arial;
+  background: linear-gradient(135deg,#4f8df5,#1f4fa3);
+  margin:0;
+  padding-top:60px;
+  text-align:center;
+  color:white;
+}
+
+.container {
+  background:white;
+  color:black;
+  width:350px;
+  margin:auto;
+  padding:25px;
+  border-radius:12px;
+  box-shadow:0 8px 20px rgba(0,0,0,0.2);
+}
+
+h2 {
+  margin-bottom:10px;
+}
+
+input, select {
+  width:90%;
+  padding:10px;
+  margin:8px;
+  border-radius:6px;
+  border:1px solid #ccc;
+}
+
+button {
+  width:95%;
+  padding:12px;
+  margin-top:12px;
+  border:none;
+  border-radius:6px;
+  background:#4CAF50;
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+button:hover {
+  background:#43a047;
+}
+
+.success {
+  color:green;
+  margin-top:10px;
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>🏥 Smart Hospital</h1>
+
+<div class="container">
+
+<h2>Create Account</h2>
+
+<input id="name" placeholder="Full Name">
+
+<input id="email" placeholder="Email">
+
+<input id="pass" type="password" placeholder="Password">
+
+<select id="role">
+  <option value="patient">Patient</option>
+  <option value="doctor">Doctor</option>
+</select>
+
+<button onclick="signup()">Signup</button>
+
+<div id="msg"></div>
+
+<p style="margin-top:15px;">
+Already registered?
+<a href="index.html">Login here</a>
+</p>
+
+</div>
+
+<script>
+
+const API = "http://localhost:3000";
+
+async function signup(){
+
+  const res = await fetch(API+"/signup",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      name:name.value,
+      email:email.value,
+      password:pass.value,
+      role:role.value
+    })
+  });
+
+  const data = await res.json();
+
+  if(data.message==="Signup successful"){
+
+    msg.innerHTML =
+      "<div class='success'>✅ Signup successful! Redirecting...</div>";
+
+    // auto redirect after 2 seconds
+    setTimeout(()=>{
+      window.location="index.html";
+    },2000);
+
+  } else {
+
+    msg.innerHTML =
+      "<div style='color:red'>"+data.message+"</div>";
+
+  }
+
+}
+
+</script>
+
+</body>
+</html>

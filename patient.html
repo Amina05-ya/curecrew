@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Patient Portal</title>
+
+<style>
+body { font-family: Arial; background:#eef4fb; padding:20px; }
+.card { background:white; padding:15px; margin:10px 0; border-radius:8px; }
+input,button{padding:8px;margin:5px;}
+</style>
+</head>
+
+<body>
+
+<h1>🧠 Patient Portal</h1>
+
+<div class="card">
+<input id="name" placeholder="Your name">
+<input id="symptom" placeholder="Symptoms">
+<button onclick="join()">Join Queue</button>
+</div>
+
+<h2>Reminders</h2>
+<div class="card" id="alerts"></div>
+
+<script>
+
+const API="http://localhost:3000";
+
+async function join(){
+ await fetch(API+"/smart-join",{method:"POST",
+ headers:{"Content-Type":"application/json"},
+ body:JSON.stringify({name:name.value,text:symptom.value})});
+}
+
+async function loadAlerts(){
+ const d=await fetch(API+"/notifications").then(r=>r.json());
+ alerts.innerHTML=d.map(a=>`Token ${a.token}<br>${a.message}`).join("<br><br>");
+}
+
+setInterval(loadAlerts,2000);
+loadAlerts();
+
+</script>
+
+</body>
+</html>

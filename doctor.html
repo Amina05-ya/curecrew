@@ -1,0 +1,31 @@
+<h1>👨‍⚕ Doctor Terminal</h1>
+
+<button onclick="setDoctor('AVAILABLE',0)">Available</button>
+<button onclick="setDoctor('EMERGENCY',15)">Emergency</button>
+<button onclick="setDoctor('REFRESHMENT',30)">Break</button>
+<button onclick="callNext()">Call Next</button>
+
+<div id="queue"></div>
+
+<script>
+const API="http://localhost:3000";
+
+async function setDoctor(status,delay){
+ await fetch(API+"/doctor/status",{method:"POST",
+ headers:{"Content-Type":"application/json"},
+ body:JSON.stringify({status,delay})});
+}
+
+async function callNext(){
+ await fetch(API+"/call-next",{method:"POST"});
+}
+
+async function loadQueue(){
+ const d=await fetch(API+"/queue").then(r=>r.json());
+ queue.innerHTML=d.map(p=>`Token ${p.token} — ${p.name}`).join("<br>");
+}
+
+setInterval(loadQueue,2000);
+loadQueue();
+</script>
+

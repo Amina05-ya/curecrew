@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Doctor Login</title>
+
+<style>
+body{font-family:Arial;background:#eef4fb;padding:20px;}
+.card{background:white;padding:20px;border-radius:12px;width:350px;margin:auto;}
+input,button{width:100%;padding:10px;margin:6px 0;}
+</style>
+</head>
+
+<body>
+
+<h2 align="center">🔐 Doctor Login</h2>
+
+<div class="card">
+
+<input id="email" placeholder="Email">
+<input id="pass" type="password" placeholder="Password">
+
+<button onclick="login()">Login</button>
+
+<div id="msg"></div>
+
+</div>
+
+<script>
+
+const API="http://localhost:3000";
+
+async function login(){
+
+const res = await fetch(API+"/doctor/login",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+email:email.value,
+password:pass.value
+})
+});
+
+const data=await res.json();
+
+if(data.doctor){
+
+localStorage.setItem(
+"doctor",
+JSON.stringify(data.doctor)
+);
+
+location="doctor-dashboard.html";
+
+}else{
+msg.innerHTML=data.message;
+}
+
+}
+
+</script>
+
+</body>
+</html>

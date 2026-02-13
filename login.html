@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Login</title>
+</head>
+
+<body>
+
+<h2>Hospital Login</h2>
+
+<input id="email" placeholder="Email"><br>
+<input id="pass" placeholder="Password"><br>
+
+<button onclick="login()">Login</button>
+
+<p>
+New user?
+<a href="signup.html">Signup</a>
+</p>
+
+<script>
+
+const API="http://localhost:3000";
+
+async function login(){
+
+ const res = await fetch(API+"/login",{
+  method:"POST",
+  headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({
+   email:email.value,
+   password:pass.value
+  })
+ });
+
+ const data=await res.json();
+
+ if(data.role==="doctor")
+   location="doctor.html";
+
+ else if(data.role==="patient")
+   location="patient-dashboard.html";
+
+
+ else
+   alert(data.message);
+
+}
+
+</script>
+
+</body>
+</html>

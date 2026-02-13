@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Doctor + Queue Live System</title>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+background:#eef4fb;
+}
+
+.container{
+display:flex;
+height:100vh;
+}
+
+/* ---------- DOCTOR PANEL ---------- */
+
+.doctorPanel{
+width:35%;
+background:white;
+padding:20px;
+box-shadow:4px 0 12px rgba(0,0,0,.1);
+overflow:auto;
+}
+
+button{
+width:100%;
+padding:14px;
+margin:8px 0;
+border:none;
+border-radius:8px;
+font-size:16px;
+cursor:pointer;
+}
+
+.available{background:#4caf50;color:white;}
+.emergency{background:#f44336;color:white;}
+.break{background:#ff9800;color:white;}
+.call{background:#2196f3;color:white;}
+
+.statusBox{
+background:#f5f5f5;
+padding:10px;
+border-radius:8px;
+margin-top:10px;
+}
+
+/* ---------- QUEUE PANEL ---------- */
+
+.queuePanel{
+flex:1;
+padding:20px;
+overflow:auto;
+}
+
+.card{
+background:white;
+padding:20px;
+border-radius:12px;
+margin:auto;
+max-width:500px;
+box-shadow:0 4px 12px rgba(0,0,0,.1);
+}
+
+.big{
+font-size:28px;
+font-weight:bold;
+color:#2e7d32;
+}
+
+.section{margin-top:15px;}
+
+.tokenCard{
+background:#f5f5f5;
+padding:10px;
+margin:6px 0;
+border-radius:8px;
+}
+
+.current{
+background:#ffccbc;
+font-weight:bold;
+}
+
+h2{text-align:center;}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<!-- ================= DOCTOR SIDE ================= -->
+
+<div class="doctorPanel">
+
+<h2>👨‍⚕️ Doctor Control</h2>
+
+<button class="available"
+onclick="setStatus('AVAILABLE',0)">
+🟢 Available
+</button>
+
+<button class="emergency"
+onclick="setStatus('EMERGENCY',15)">
+🚨 Emergency (15 min delay)
+</button>
+
+<button class="break"
+onclick="setStatus('REFRESHMENT',30)">
+☕ Break (30 min delay)
+</button>
+
+<button class="call"
+onclick="callNext()">
+▶ Call Next Patient
+</button>
+
+<div id="doctorStatus" class="statusBox"></div>
+
+</div>
+
+<!-- ================= QUEUE SIDE ================= -->
+
+<div class="queuePanel">
+
+<h2>🔔 Live Queue Status</h2>
+
+<div class="card">
+
+<div id="myStatus"></div>
+
+<div class="section">
+<h3>Tokens Before You</h3>
+<div id="beforeList"></div>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+const API="http://localhost:3000";
+const token = Number(localStorage.getItem("patientToken"));
+
+/* ---------- DOCTOR CONTROL ---------- */
+
+async function setStatus(status,delay){
+
+await fetch(API+"/doctor/status",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({status,delay})
+});
+
+loadDoctorStatus();
+}
+
+async function callNext(){
+
+await fetch(API+"/call-next",{method:"POST"});
+}
+
+/* ---------- DOCTOR STATUS ---------- */
+
+async function loadDoctorStatus(){
+
+const d=await fetch(API+"/doctor/status")
+.then(r=>r.json());
+
+doctorStatus.innerHTML=`
+Status: <b>${d.doctorStatus}</b><br>
+Delay: ${d.delayMinutes} mins
+`;
+}
+
+/* ---------- QUEUE TRACKER ---------- */
+
+async function loadQueue(){
+
+if(!token){
+beforeList.innerHTML="No token found";
+return;
+}
+
+const queue = await fetch(API+"/queue")
+.then(r=>r.json());
+
+const myIndex = queue.findIndex(
+p=>p.token===token
+);
+
+const my = await fetch(
+API+"/patient/"+token
+).then(r=>r.json());
+
+myStatus.innerHTML=`
+
+🎟 Token: <span class="big">${my.token}</span><br>
+📍 Position: ${my.position}<br>
+⏱ Estimated Wait: ${my.estimated_wait_minutes} mins<br>
+👨‍⚕️ Doctor: ${my.doctorStatus}
+
+`;
+
+const before =
+myIndex>0 ? queue.slice(0,myIndex) : [];
+
+beforeList.innerHTML=
+
+before.length===0
+? `<div class="tokenCard current">
+✅ You are next!
+</div>`
+: before.map((p,i)=>`
+
+<div class="tokenCard">
+
+🎟 Token ${p.token}<br>
+📍 Position: ${i+1}<br>
+🔄 Waiting...
+
+</div>
+
+`).join("");
+
+}
+
+/* ---------- LIVE REFRESH ---------- */
+
+setInterval(()=>{
+loadQueue();
+loadDoctorStatus();
+},2000);
+
+loadQueue();
+loadDoctorStatus();
+
+</script>
+
+</body>
+</html>
+

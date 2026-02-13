@@ -21,6 +21,186 @@ let delayMinutes = 0;
 let tokenCounter = 1;
 
 // =========================
+// DOCTOR AUTH SYSTEM
+// =========================
+
+// =========================
+// DOCTOR AUTH SYSTEM
+// =========================
+
+let doctors = [];
+
+// doctor signup
+app.post("/doctor/signup", (req, res) => {
+
+  const { name, email, password } = req.body;
+
+  if (doctors.find(d => d.email === email))
+    return res.json({ message: "Doctor already exists" });
+
+  const doctor = {
+    id: uuid(),
+    name,
+    email,
+    password
+  };
+
+  doctors.push(doctor);
+
+  res.json({ message: "Signup successful" });
+
+});
+
+// doctor login
+app.post("/doctor/login", (req, res) => {
+
+  const { email, password } = req.body;
+
+  const doctor = doctors.find(
+    d => d.email === email && d.password === password
+  );
+
+  if (!doctor)
+    return res.json({ message: "Invalid credentials" });
+
+  res.json({
+    message: "Login success",
+    doctor: {
+      id: doctor.id,
+      name: doctor.name
+    }
+  });
+
+});
+
+
+// =========================
+// HOSPITAL + DOCTOR DATA
+// =========================
+
+const hospitalData = {
+  "Chennai": {
+    "Apollo Hospital": [
+      "Dr. Meera Nair",
+      "Dr. Rajesh Kumar"
+    ],
+    "City Care Clinic": [
+      "Dr. Anjali Sharma"
+    ]
+  },
+
+  "Bangalore": {
+    "Metro Health": [
+      "Dr. Vivek Patel"
+    ],
+    "Green Valley": [
+      "Dr. Arjun Reddy"
+    ]
+  }
+};
+
+// cities
+app.get("/cities", (req,res)=>{
+  res.json(Object.keys(hospitalData));
+});
+
+// hospitals by city
+app.get("/hospitals/:city",(req,res)=>{
+  const city=req.params.city;
+  res.json(Object.keys(hospitalData[city]||{}));
+});
+
+// doctors by hospital
+app.get("/doctors/:city/:hospital",(req,res)=>{
+  const {city,hospital}=req.params;
+  res.json(
+    hospitalData[city]?.[hospital] || []
+  );
+});
+
+// =========================
+// BOOK APPOINTMENT → QUEUE
+// =========================
+
+app.post("/book-appointment",(req,res)=>{
+
+  const { name, severity } = req.body;
+
+  const token = generateAppointmentToken();
+
+  const patient = {
+
+    id: uuid(),
+    name: name || "Patient",
+    token,
+    severity: severity || 1,
+    time: Date.now()
+
+  };
+
+  // auto add to queue
+  queue.push(patient);
+
+  reorderQueue();
+
+  const position =
+    queue.findIndex(p => p.id === patient.id);
+
+  let wait = position * 5;
+
+  if(doctorStatus !== "AVAILABLE")
+    wait += delayMinutes;
+
+  const time =
+    new Date(Date.now()+wait*60000)
+    .toLocaleTimeString();
+
+  res.json({
+
+    status:"Confirmed",
+    token,
+    queuePosition: position+1,
+    estimatedWait: wait,
+    appointmentTime: time,
+    doctorStatus
+
+  });
+
+});
+
+app.post("/call-next",(req,res)=>{
+if(queue.length>0) queue.shift();
+res.json({message:"Next patient called"});
+});
+
+
+// =========================
+// APPOINTMENT TOKEN SYSTEM
+// =========================
+
+let appointmentToken = 10;
+
+function generateAppointmentToken(){
+
+  const token = appointmentToken;
+
+  appointmentToken++;
+
+  if(appointmentToken > 15)
+    appointmentToken = 10;
+
+  return token;
+}
+
+
+// =========================
+// USER STORAGE
+// =========================
+
+let users = []; // doctors + patients
+
+
+// =========================
 // PRIORITY SORT
 // =========================
 
@@ -328,6 +508,73 @@ app.post("/medicine/taken/:id", (req, res) => {
   });
 
 });
+
+// =========================
+// SIGNUP
+// =========================
+
+app.post("/signup", (req, res) => {
+
+  const { name, email, password, role } = req.body;
+
+  const exists = users.find(u => u.email === email);
+
+  if (exists)
+    return res.json({ message: "User exists" });
+
+  users.push({ name, email, password, role });
+
+  res.json({ message: "Signup successful" });
+
+});
+
+// =========================
+// LOGIN
+// =========================
+
+app.post("/login", (req, res) => {
+
+  const { email, password } = req.body;
+
+  const user = users.find(
+    u => u.email === email && u.password === password
+  );
+
+  if (!user)
+    return res.json({ message: "Invalid login" });
+
+  res.json({
+    message: "Login success",
+    role: user.role,
+    name: user.name
+  });
+
+});
+
+// hospital search
+app.get("/search/hospital", (req, res) => {
+
+  const q = (req.query.q || "").toLowerCase();
+
+  const results = hospitals.filter(h =>
+    h.toLowerCase().includes(q)
+  );
+
+  res.json(results);
+});
+
+// doctor search
+app.get("/search/doctor", (req, res) => {
+
+  const q = (req.query.q || "").toLowerCase();
+
+  const results = doctors.filter(d =>
+    d.toLowerCase().includes(q)
+  );
+
+  res.json(results);
+});
+
 
 // =========================
 // DASHBOARD

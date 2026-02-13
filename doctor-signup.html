@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Doctor Signup</title>
+
+<style>
+body{font-family:Arial;background:#eef4fb;padding:20px;}
+.card{background:white;padding:20px;border-radius:12px;width:350px;margin:auto;}
+input,button{width:100%;padding:10px;margin:6px 0;}
+</style>
+</head>
+
+<body>
+
+<h2 align="center">👨‍⚕ Doctor Signup</h2>
+
+<div class="card">
+
+<input id="name" placeholder="Doctor Name">
+<input id="email" placeholder="Email">
+<input id="pass" type="password" placeholder="Password">
+
+<button onclick="signup()">Signup</button>
+
+<div id="msg"></div>
+
+</div>
+
+<script>
+
+const API="http://localhost:3000";
+
+async function signup(){
+
+const res = await fetch(API+"/doctor/signup",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+name:name.value,
+email:email.value,
+password:pass.value
+})
+});
+
+const data=await res.json();
+msg.innerHTML=data.message;
+
+if(data.message==="Signup successful"){
+setTimeout(()=>location="doctor-login.html",1000);
+}
+
+}
+
+</script>
+
+</body>
+</html>
