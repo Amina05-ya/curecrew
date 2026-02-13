@@ -12,7 +12,9 @@ app.use(express.json());
 
 let queue = [];
 let medicines = [];
+let medicineReminders = [];
 let reminders = [];
+let patientNotifications = [];
 
 let doctorStatus = "AVAILABLE";
 let delayMinutes = 0;
@@ -29,7 +31,7 @@ function reorderQueue() {
 }
 
 // =========================
-// REMINDER ENGINE
+// QUEUE REMINDER ENGINE
 // =========================
 
 function generateReminders() {
@@ -44,51 +46,48 @@ function generateReminders() {
     if (doctorStatus !== "AVAILABLE")
       wait += delayMinutes;
 
-    const positionText =
-      `📍 Position in queue: ${index + 1}`;
+    const position = index + 1;
 
-    let message = "";
+    let message = `
+📍 Position in queue: ${position}<br>
+⏱ Estimated waiting time: ${wait} minutes<br>
+`;
 
-    // emergency
     if (doctorStatus === "EMERGENCY") {
 
-      message =
-        `${positionText}<br>🚨 Doctor is handling an emergency — please wait.`;
+      message +=
+        "🚨 Doctor handling emergency — delay expected.";
 
     }
-    // refreshment
     else if (doctorStatus === "REFRESHMENT") {
 
-      message =
-        `${positionText}<br>☕ Doctor on refreshment break — consultation resumes soon.`;
+      message +=
+        "☕ Doctor on refreshment break — please wait.";
 
     }
-    // immediate turn
     else if (index === 0) {
 
-      message =
-        `${positionText}<br>🚨 It's your turn now — please proceed.`;
+      message +=
+        "✅ It's your turn now — please proceed.";
 
     }
-    // near turn
     else if (wait <= 5) {
 
-      message =
-        `${positionText}<br>⏳ Within 5 minutes it's your turn — please be ready.`;
+      message +=
+        "⏳ Almost your turn — stay nearby.";
 
     }
-    // general wait
     else {
 
-      message =
-        `${positionText}<br>${wait} minutes estimated wait — relax nearby.`;
-
+      message +=
+        "🕒 Please relax, you’ll be called soon.";
     }
 
     reminders.push({
       token: patient.token,
       message,
-      position: index + 1,
+      position,
+      estimated_wait: wait,
       time: new Date()
     });
 
@@ -96,8 +95,57 @@ function generateReminders() {
 
 }
 
-// auto refresh reminders
-setInterval(generateReminders, 5000);
+// =========================
+// PATIENT NOTIFICATION ENGINE
+// =========================
+
+function generatePatientNotifications() {
+
+  patientNotifications = reminders.map(r => ({
+    token: r.token,
+    message: r.message,
+    position: r.position,
+    time: r.time
+  }));
+
+}
+
+// =========================
+// MEDICINE REMINDER ENGINE
+// =========================
+
+function checkMedicineReminders() {
+
+  const now = Date.now();
+
+  medicines.forEach(m => {
+
+    if (!m.nextReminder) return;
+
+    if (now >= m.nextReminder) {
+
+      medicineReminders.push({
+        medicine: m.name,
+        dosage: m.dosage,
+        message: `💊 Take ${m.name} (${m.dosage})`,
+        time: new Date()
+      });
+
+      m.nextReminder =
+        now + m.interval * 60000;
+    }
+
+  });
+
+}
+
+// run engines
+setInterval(() => {
+  generateReminders();
+  generatePatientNotifications();
+}, 5000);
+
+setInterval(checkMedicineReminders, 10000);
 
 // =========================
 // SMART TOKEN JOIN
@@ -113,11 +161,9 @@ app.post("/smart-join", (req, res) => {
   if (text.includes("chest") || text.includes("breath")) severity = 5;
   else if (text.includes("fever") || text.includes("pain")) severity = 3;
 
-  const token = tokenCounter++;
-
   const patient = {
     id: uuid(),
-    token,
+    token: tokenCounter++,
     name,
     severity,
     time: Date.now()
@@ -125,9 +171,12 @@ app.post("/smart-join", (req, res) => {
 
   queue.push(patient);
   reorderQueue();
-  generateReminders();
 
-  const position = queue.findIndex(p => p.id === patient.id);
+  generateReminders();
+  generatePatientNotifications();
+
+  const position =
+    queue.findIndex(p => p.id === patient.id);
 
   let wait = position * 5;
 
@@ -136,7 +185,7 @@ app.post("/smart-join", (req, res) => {
 
   res.json({
     message: "Token generated",
-    token,
+    token: patient.token,
     position: position + 1,
     estimated_wait_minutes: wait,
     doctorStatus
@@ -151,7 +200,6 @@ app.post("/smart-join", (req, res) => {
 app.get("/patient/:token", (req, res) => {
 
   const token = parseInt(req.params.token);
-
   const patient = queue.find(p => p.token === token);
 
   if (!patient)
@@ -175,23 +223,42 @@ app.get("/patient/:token", (req, res) => {
 });
 
 // =========================
-// VIEW QUEUE
+// VIEW DATA APIs
 // =========================
 
-app.get("/queue", (req, res) => {
-  res.json(queue);
+app.get("/queue", (req, res) => res.json(queue));
+app.get("/reminders", (req, res) => res.json(reminders));
+app.get("/notifications", (req, res) => res.json(patientNotifications));
+
+// =========================
+// CALL NEXT PATIENT (LIVE QUEUE)
+// =========================
+
+app.post("/call-next", (req, res) => {
+
+  if (queue.length === 0) {
+    return res.json({ message: "Queue empty" });
+  }
+
+  // remove first patient
+  const calledPatient = queue.shift();
+
+  // update system
+  reorderQueue();
+  generateReminders();
+  generatePatientNotifications();
+
+  res.json({
+    message: "Patient called",
+    called: calledPatient,
+    queue
+  });
+
 });
 
-// =========================
-// VIEW REMINDERS
-// =========================
-
-app.get("/reminders", (req, res) => {
-  res.json(reminders);
-});
 
 // =========================
-// DOCTOR STATUS CONTROL
+// DOCTOR CONTROL
 // =========================
 
 app.post("/doctor/status", (req, res) => {
@@ -200,14 +267,15 @@ app.post("/doctor/status", (req, res) => {
   delayMinutes = req.body.delay || 0;
 
   generateReminders();
+  generatePatientNotifications();
 
   res.json({ doctorStatus, delayMinutes });
 
 });
 
-app.get("/doctor/status", (req, res) => {
-  res.json({ doctorStatus, delayMinutes });
-});
+app.get("/doctor/status", (req, res) =>
+  res.json({ doctorStatus, delayMinutes })
+);
 
 // =========================
 // MEDICINE TRACKER
@@ -215,29 +283,49 @@ app.get("/doctor/status", (req, res) => {
 
 app.post("/medicine", (req, res) => {
 
+  const interval = parseInt(req.body.interval) || 1;
+
   const med = {
     id: uuid(),
     name: req.body.name,
     dosage: req.body.dosage,
-    status: "pending"
+    status: "pending",
+    interval,
+    nextReminder: Date.now() + interval * 60000
   };
 
   medicines.push(med);
 
-  res.json(medicines);
+  res.json({ message: "Medicine added", medicines });
 
 });
 
-app.get("/medicines", (req, res) => {
-  res.json(medicines);
-});
+app.get("/medicines", (req, res) =>
+  res.json(medicines)
+);
+
+app.get("/medicine-reminders", (req, res) =>
+  res.json(medicineReminders)
+);
 
 app.post("/medicine/taken/:id", (req, res) => {
 
-  const med = medicines.find(m => m.id === req.params.id);
-  if (med) med.status = "taken";
+  const med = medicines.find(
+    m => m.id === req.params.id
+  );
 
-  res.json(medicines);
+  if (med) {
+
+    med.status = "taken";
+    med.nextReminder =
+      Date.now() + med.interval * 60000;
+
+  }
+
+  res.json({
+    message: "Medicine taken",
+    medicines
+  });
 
 });
 
@@ -273,7 +361,5 @@ app.get("/dashboard", (req, res) => {
 // =========================
 
 app.listen(3000, () =>
-  console.log("🚀 Smart Hospital Queue + Position Reminder Running")
+  console.log("🚀 Smart Hospital System Running")
 );
-
-

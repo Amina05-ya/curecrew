@@ -1,38 +1,36 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Smart Hospital Live Queue</title>
+<title>🏥 Smart Hospital System</title>
 
-  <style>
-    body {
-      font-family: Arial;
-      padding: 20px;
-      background: #f5f7fb;
-    }
+<style>
+body {
+  font-family: Arial;
+  background: #eef3f9;
+  padding: 20px;
+}
 
-    h2 { margin-top: 30px; }
+h2 {
+  margin-top: 25px;
+}
 
-    input, button {
-      padding: 8px;
-      margin: 5px;
-    }
+.card {
+  background: white;
+  padding: 12px;
+  margin: 8px 0;
+  border-radius: 8px;
+  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+}
 
-    button {
-      cursor: pointer;
-      background: #2d89ef;
-      color: white;
-      border: none;
-      border-radius: 4px;
-    }
+input, button {
+  padding: 8px;
+  margin: 4px;
+}
 
-    .card {
-      background: white;
-      padding: 15px;
-      border-radius: 8px;
-      margin-top: 10px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.1);
-    }
-  </style>
+button {
+  cursor: pointer;
+}
+</style>
 </head>
 
 <body>
@@ -43,190 +41,231 @@
 
 <h2>🧠 Patient Intake</h2>
 
-<input id="pname" placeholder="Patient Name">
+<input id="pname" placeholder="Patient name">
 <input id="symptom" placeholder="Symptoms">
 
-<button onclick="addPatient()">Add Patient</button>
+<button onclick="addPatient()">Join Queue</button>
 
-<div class="card" id="queue"></div>
-
-<!-- ================= MEDICINES ================= -->
-
-<h2>💊 Medicines</h2>
-
-<input id="mname" placeholder="Medicine Name">
-<input id="mdose" placeholder="Dosage">
-
-<button onclick="addMedicine()">Add Medicine</button>
-
-<div class="card" id="meds"></div>
-
-<!-- ================= DASHBOARD ================= -->
-
-<h2>📊 Doctor Dashboard</h2>
-
-<div class="card" id="dashboard"></div>
+<div class="card" id="queueBox"></div>
 
 <!-- ================= DOCTOR CONTROL ================= -->
 
 <h2>👨‍⚕ Doctor Control</h2>
 
-<button onclick="setDoctor('AVAILABLE', 0)">🟢 Available</button>
-<button onclick="setDoctor('EMERGENCY', 15)">🚨 Emergency</button>
-<button onclick="setDoctor('REFRESHMENT', 5)">☕ Refreshment</button>
+<button onclick="setDoctor('AVAILABLE',0)"
+style="background:#4CAF50;color:white">
+🟢 Available
+</button>
 
-<!-- ================= REMINDERS ================= -->
+<button onclick="setDoctor('EMERGENCY',15)"
+style="background:#e53935;color:white">
+🚨 Emergency (+15 min)
+</button>
 
-<h2>🔔 Live Reminders</h2>
+<button onclick="setDoctor('REFRESHMENT',30)"
+style="background:#ff9800;color:white">
+☕ Break (+30 min)
+</button>
 
-<div class="card" id="reminders"></div>
+<h2>📢 Call Next Patient</h2>
+
+<button onclick="callNext()"
+style="background:#2196F3;color:white">
+➡ Call Next
+</button>
+
+
+
+<!-- ================= QUEUE REMINDERS ================= -->
+
+<h2>🔔 Queue Reminders</h2>
+
+<div class="card" id="reminderBox"></div>
+
+<!-- ================= PATIENT NOTIFICATIONS ================= -->
+
+<h2>📢 Patient Notification Screen</h2>
+
+<div class="card" id="notifyBox"></div>
+
+<!-- ================= MEDICINES ================= -->
+
+<h2>💊 Medicine Manager</h2>
+
+<input id="mname" placeholder="Medicine">
+<input id="mdose" placeholder="Dosage">
+<input id="minterval" placeholder="Interval (minutes)">
+
+<button onclick="addMedicine()">Add Medicine</button>
+
+<div class="card" id="medBox"></div>
+
+<h2>💊 Medicine Alerts</h2>
+
+<div class="card" id="medReminderBox"></div>
+
+<!-- ================= DASHBOARD ================= -->
+
+<h2>📊 Dashboard</h2>
+
+<div class="card" id="dashBox"></div>
 
 <script>
 
 const API = "http://localhost:3000";
 
-// ================= PATIENT =================
+// ================= ACTIONS =================
 
 async function addPatient() {
 
-  const name = document.getElementById("pname").value;
-  const text = document.getElementById("symptom").value;
-
   await fetch(API + "/smart-join", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({ name, text })
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({
+      name: pname.value,
+      text: symptom.value
+    })
+  });
+
+  pname.value="";
+  symptom.value="";
+}
+
+async function setDoctor(status,delay) {
+
+  await fetch(API + "/doctor/status", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({status,delay})
   });
 
 }
-
-// ================= QUEUE =================
-
-async function loadQueue() {
-
-  const res = await fetch(API + "/queue");
-  const data = await res.json();
-
-  const html =
-    data.length === 0
-      ? "No patients"
-      : data.map(p =>
-          `Token ${p.token} — ${p.name} (severity ${p.severity})`
-        ).join("<br>");
-
-  const el = document.getElementById("queue");
-
-  if (el.innerHTML !== html)
-    el.innerHTML = "<b>Queue:</b><br>" + html;
-}
-
-// ================= MEDICINES =================
 
 async function addMedicine() {
 
-  const name = document.getElementById("mname").value;
-  const dosage = document.getElementById("mdose").value;
-
   await fetch(API + "/medicine", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({ name, dosage })
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({
+      name: mname.value,
+      dosage: mdose.value,
+      interval: minterval.value
+    })
   });
 
+  mname.value="";
+  mdose.value="";
+  minterval.value="";
+}
+
+// ================= LOADERS =================
+
+async function loadQueue() {
+
+  const data = await fetch(API+"/queue").then(r=>r.json());
+
+  queueBox.innerHTML =
+    data.length===0
+    ? "No patients"
+    : data.map(p =>
+      `Token ${p.token} — ${p.name} (severity ${p.severity})`
+    ).join("<br>");
+}
+
+async function loadReminders() {
+
+  const data = await fetch(API+"/reminders").then(r=>r.json());
+
+  reminderBox.innerHTML =
+    data.length===0
+    ? "No reminders"
+    : data.map(r =>
+      `Token ${r.token}: ${r.message}`
+    ).join("<br><br>");
+}
+
+async function loadNotifications() {
+
+  const data = await fetch(API+"/notifications").then(r=>r.json());
+
+  notifyBox.innerHTML =
+    data.length===0
+    ? "No notifications"
+    : data.map(n =>
+      `Token ${n.token}: ${n.message}`
+    ).join("<br><br>");
 }
 
 async function loadMedicines() {
 
-  const res = await fetch(API + "/medicines");
-  const data = await res.json();
+  const data = await fetch(API+"/medicines").then(r=>r.json());
 
-  const html =
-    data.length === 0
-      ? "No medicines"
-      : data.map(m =>
-          `${m.name} (${m.dosage}) — ${m.status}`
-        ).join("<br>");
-
-  const el = document.getElementById("meds");
-
-  if (el.innerHTML !== html)
-    el.innerHTML = "<b>Medicines:</b><br>" + html;
+  medBox.innerHTML =
+    data.length===0
+    ? "No medicines"
+    : data.map(m =>
+      `${m.name} (${m.dosage}) — ${m.status}`
+    ).join("<br>");
 }
 
-// ================= DASHBOARD =================
+async function loadMedicineAlerts() {
+
+  const data = await fetch(API+"/medicine-reminders").then(r=>r.json());
+
+  medReminderBox.innerHTML =
+    data.length===0
+    ? "No medicine alerts"
+    : data.map(m =>
+      m.message
+    ).join("<br>");
+}
 
 async function loadDashboard() {
 
-  const res = await fetch(API + "/dashboard");
-  const d = await res.json();
+  const d = await fetch(API+"/dashboard").then(r=>r.json());
 
-  const html =
-    `
+  dashBox.innerHTML = `
     Patients: ${d.totalPatients}<br>
     Emergencies: ${d.emergencyCount}<br>
     Doctor Status: ${d.doctorStatus}<br>
     Delay: ${d.delayMinutes} min<br>
     Medicine Adherence: ${d.medicineAdherencePercent}%
-    `;
-
-  const el = document.getElementById("dashboard");
-
-  if (el.innerHTML !== html)
-    el.innerHTML = html;
+  `;
 }
 
-// ================= DOCTOR CONTROL =================
+// ================= LIVE REFRESH =================
 
-async function setDoctor(status, delay) {
+function refreshAll() {
 
-  await fetch(API + "/doctor/status", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({ status, delay })
+  loadQueue();
+  loadReminders();
+  loadNotifications();
+  loadMedicines();
+  loadMedicineAlerts();
+  loadDashboard();
+}
+
+setInterval(refreshAll, 2000);
+refreshAll();
+
+async function callNext() {
+
+  const res = await fetch(API + "/call-next", {
+    method:"POST"
   });
 
-}
-
-// ================= REMINDERS =================
-
-async function loadReminders() {
-
-  const res = await fetch(API + "/reminders");
   const data = await res.json();
 
-  const html =
-    data.length === 0
-      ? "No reminders"
-      : data.map(r =>
-          `Token ${r.token}: ${r.message}`
-        ).join("<br><br>");
+  alert(
+    data.called
+      ? `Calling Token ${data.called.token}`
+      : data.message
+  );
 
-  const el = document.getElementById("reminders");
-
-  if (el.innerHTML !== html)
-    el.innerHTML = html;
 }
 
-// ================= LIVE UPDATE STRATEGY =================
-
-// slower refresh → heavy data
-setInterval(() => {
-  loadQueue();
-  loadDashboard();
-  loadMedicines();
-}, 4000);
-
-// fast refresh → reminders
-setInterval(loadReminders, 1000);
-
-// initial load
-loadQueue();
-loadDashboard();
-loadMedicines();
-loadReminders();
 
 </script>
 
 </body>
 </html>
-
