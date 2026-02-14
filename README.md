@@ -80,14 +80,50 @@ CureCrew is a Smart Hospital prototype built to improve hospital efficiency usin
 ![Queue Tracker](Screenshot/queue-tracker.png)
 ---
 
+
 ## ▶ How To Run Locally
 
-1. Install Node.js  
-2. Open terminal in project folder  
-3. Run:
-    npm install
-    node server.js
-4. Open browser:
+### 1️⃣ Install Node.js
+Download and install from: [https://nodejs.org](https://nodejs.org)
+
+### 2️⃣ Clone the Repository
+```bash
+git clone  https://amina05-ya.github.io/curecrew/
+cd curecrew
+
+
+# 🏥 CureCrew – Smart Hospital Management System
+
+🎥 Demo Video:  
+[![Watch the demo](https://img.youtube.com/vi/YOUR_VIDEO_ID/0.jpg)](https://youtu.be/llyAJCG_Y2U?si=zKulgUhJx8spfLup)
 
 
 
+
+---
+
+# 🔮 Future Improvements
+
+- MongoDB / Firebase database integration  
+- Admin panel  
+- SMS / Email notifications  
+- Cloud deployment (Render / Railway / Vercel)  
+- Payment integration for parking  
+- AI-based patient triage system  
+
+---
+
+# 🏆 Project Vision
+
+CureCrew aims to reduce hospital waiting time, improve patient experience, and help doctors manage workflow efficiently using smart digital tools.
+
+---
+
+# 👩‍💻 Developed By
+
+Fousiya  N and Amina S
+CureCrew – Smart Hospital Project  
+
+---
+
+⭐ If you like this project, consider giving it a star!
