@@ -211,123 +211,125 @@ const API = "http://localhost:3000";
 const token = Number(localStorage.getItem("patientToken"));
 
 let announced = false;
-let lastPosition = null;
 
 /* ===== TOAST ===== */
 
 function showToast(msg){
-toast.innerText = msg;
-toast.classList.add("show");
-setTimeout(()=>toast.classList.remove("show"),3000);
+  toast.innerText = msg;
+  toast.classList.add("show");
+  setTimeout(()=>toast.classList.remove("show"),3000);
 }
 
 /* ===== VOICE ===== */
 
 function announceTurn(tokenNumber){
 
-speechSynthesis.cancel();
+  speechSynthesis.cancel();
 
-const msg = new SpeechSynthesisUtterance(
-`Attention please. Token ${tokenNumber}, please proceed to the doctor.`
-);
+  const msg = new SpeechSynthesisUtterance(
+    `Attention please. Token ${tokenNumber}, please proceed to the doctor.`
+  );
 
-msg.rate = 1;
-msg.pitch = 1;
+  msg.rate = 1;
+  msg.pitch = 1;
 
-speechSynthesis.speak(msg);
+  speechSynthesis.speak(msg);
 }
 
 /* ===== BEEP ===== */
 
 function beep(){
-const ctx = new AudioContext();
-const osc = ctx.createOscillator();
-osc.frequency.setValueAtTime(900, ctx.currentTime);
-osc.connect(ctx.destination);
-osc.start();
-setTimeout(()=>osc.stop(),300);
+  const ctx = new AudioContext();
+  const osc = ctx.createOscillator();
+
+  osc.frequency.setValueAtTime(900, ctx.currentTime);
+  osc.connect(ctx.destination);
+
+  osc.start();
+  setTimeout(()=>osc.stop(),300);
 }
 
 /* ===== LOAD QUEUE ===== */
 
 async function loadQueue(){
 
-if(!token){
-beforeList.innerHTML="No token found";
-return;
-}
+  if(!token){
+    beforeList.innerHTML="No token found";
+    return;
+  }
 
-const queue = await fetch(API+"/queue")
-.then(r=>r.json());
+  // 🔥 Fetch queue
+  let queue = await fetch(API+"/queue")
+  .then(r=>r.json());
 
-const my = await fetch(
-API+"/patient/"+token
-).then(r=>r.json());
+  // 🔥 Force numeric ordering (IMPORTANT)
+  queue.sort((a,b)=>a.token-b.token);
 
-const myIndex = queue.findIndex(
-p=>p.token===token
-);
+  const my = await fetch(
+    API+"/patient/"+token
+  ).then(r=>r.json());
 
-/* ===== TURN ANNOUNCEMENT LOGIC ===== */
+  const myIndex = queue.findIndex(
+    p=>p.token===token
+  );
 
-if(my.position === 1 && lastPosition !== 1){
+  /* ===== TURN ANNOUNCEMENT ===== */
 
-showToast("🚨 It's your turn now!");
-beep();
-announceTurn(my.token);
-mainCard.classList.add("glow");
+  if(my.position === 1 && !announced){
 
-announced = true;
-}
+    showToast("🚨 It's your turn now!");
+    beep();
+    announceTurn(my.token);
+    mainCard.classList.add("glow");
 
-if(my.position !== 1){
-announced = false;
-mainCard.classList.remove("glow");
-speechSynthesis.cancel();
-}
+    announced = true;
+  }
 
-lastPosition = my.position;
+  if(my.position !== 1){
+    announced = false;
+    mainCard.classList.remove("glow");
+  }
 
-/* ===== UPDATE UI ===== */
+  /* ===== UPDATE UI ===== */
 
-myStatus.innerHTML=`
+  myStatus.innerHTML=`
+  🎟 Token: <span class="big">${my.token}</span><br>
+  📍 Position: ${my.position}<br>
+  ⏱ Estimated Wait: ${my.estimated_wait_minutes} mins<br>
+  👨‍⚕️ Doctor Status: ${my.doctorStatus}
+  `;
 
-🎟 Token: <span class="big">${my.token}</span><br>
-📍 Position: ${my.position}<br>
-⏱ Estimated Wait: ${my.estimated_wait_minutes} mins<br>
-👨‍⚕️ Doctor Status: ${my.doctorStatus}
+  /* ===== PROGRESS BAR ===== */
 
-`;
+  let total = queue.length;
 
-/* ===== PROGRESS BAR ===== */
+  let progress = total === 0
+  ? 0
+  : ((total - my.position) / total) * 100;
 
-let total = queue.length;
-let progress = total===0 ? 0 :
-((total - my.position + 1)/total)*100;
+  progressBar.style.width = progress + "%";
 
-progressBar.style.width = progress + "%";
+  /* ===== TOKENS BEFORE ===== */
 
-/* ===== TOKENS BEFORE ===== */
+  const before =
+  myIndex>0 ? queue.slice(0,myIndex) : [];
 
-const before =
-myIndex>0 ? queue.slice(0,myIndex) : [];
+  beforeList.innerHTML=
 
-beforeList.innerHTML=
+  before.length===0
 
-before.length===0
+  ? `<div class="tokenCard current">
+     ✅ You are next!
+     </div>`
 
-? `<div class="tokenCard current">
-✅ You are next!
-</div>`
+  : before.map((p,i)=>`
 
-: before.map((p,i)=>`
+  <div class="tokenCard waiting">
+  🎟 Token ${p.token}<br>
+  📍 Queue Position: ${i+1}
+  </div>
 
-<div class="tokenCard waiting">
-🎟 Token ${p.token}<br>
-📍 Queue Position: ${i+1}
-</div>
-
-`).join("");
+  `).join("");
 
 }
 
@@ -335,6 +337,7 @@ setInterval(loadQueue,2000);
 loadQueue();
 
 </script>
+
 
 
 </body>

@@ -48,17 +48,12 @@ gap:20px;
 
 .doctorPanel{
 width:35%;
-background:rgba(255,255,255,0.6);
+background:rgba(255,255,255,0.65);
 backdrop-filter:blur(20px);
 border-radius:20px;
 padding:25px;
 box-shadow:0 10px 30px rgba(0,0,0,.2);
 overflow:auto;
-transition:.3s;
-}
-
-.doctorPanel:hover{
-transform:translateY(-5px);
 }
 
 .doctorPanel h2{
@@ -97,28 +92,28 @@ box-shadow:0 6px 20px rgba(0,0,0,.2);
 
 .statusBox{
 background:white;
-padding:12px;
+padding:14px;
 border-radius:12px;
 margin-top:15px;
 box-shadow:0 4px 12px rgba(0,0,0,.1);
 font-weight:bold;
+transition:.3s;
+}
+
+.statusBox.availableGlow{
+box-shadow:0 0 20px #4caf50;
 }
 
 /* ================= QUEUE PANEL ================= */
 
 .queuePanel{
 flex:1;
-background:rgba(255,255,255,0.6);
+background:rgba(255,255,255,0.65);
 backdrop-filter:blur(20px);
 border-radius:20px;
 padding:25px;
 box-shadow:0 10px 30px rgba(0,0,0,.2);
 overflow:auto;
-transition:.3s;
-}
-
-.queuePanel:hover{
-transform:translateY(-5px);
 }
 
 .queuePanel h2{
@@ -145,6 +140,8 @@ font-weight:bold;
 color:#2e7d32;
 }
 
+.section{margin-top:20px;}
+
 /* ================= TOKEN CARDS ================= */
 
 .tokenCard{
@@ -165,14 +162,27 @@ border-left:6px solid #2e7d32;
 font-weight:bold;
 }
 
-.section{margin-top:20px;}
+.servingBadge{
+background:#4caf50;
+color:white;
+padding:4px 8px;
+border-radius:8px;
+font-size:12px;
+margin-left:8px;
+}
+
+.totalBox{
+text-align:center;
+margin-bottom:15px;
+font-weight:bold;
+color:#444;
+}
 
 </style>
 </head>
 
 <body>
 
-<!-- Floating Shapes -->
 <div class="shape s1"></div>
 <div class="shape s2"></div>
 <div class="shape s3"></div>
@@ -185,23 +195,19 @@ font-weight:bold;
 
 <h2>👨‍⚕️ Doctor Control Panel</h2>
 
-<button class="available"
-onclick="setStatus('AVAILABLE',0)">
+<button class="available" onclick="setStatus('AVAILABLE',0)">
 🟢 Available
 </button>
 
-<button class="emergency"
-onclick="setStatus('EMERGENCY',15)">
+<button class="emergency" onclick="setStatus('EMERGENCY',15)">
 🚨 Emergency (15 min delay)
 </button>
 
-<button class="break"
-onclick="setStatus('REFRESHMENT',30)">
+<button class="break" onclick="setStatus('REFRESHMENT',30)">
 ☕ Break (30 min delay)
 </button>
 
-<button class="call"
-onclick="callNext()">
+<button class="call" onclick="callNext()">
 ▶ Call Next Patient
 </button>
 
@@ -216,6 +222,8 @@ onclick="callNext()">
 <h2>🔔 Live Queue Tracker</h2>
 
 <div class="card">
+
+<div class="totalBox" id="totalBox"></div>
 
 <div id="myStatus"></div>
 
@@ -235,18 +243,16 @@ onclick="callNext()">
 const API="http://localhost:3000";
 const token = Number(localStorage.getItem("patientToken"));
 
-let announced=false;
+let lastPosition = null;
 
 /* ---------- DOCTOR CONTROL ---------- */
 
 async function setStatus(status,delay){
-
 await fetch(API+"/doctor/status",{
 method:"POST",
 headers:{"Content-Type":"application/json"},
 body:JSON.stringify({status,delay})
 });
-
 loadDoctorStatus();
 }
 
@@ -257,35 +263,34 @@ await fetch(API+"/call-next",{method:"POST"});
 /* ---------- LOAD DOCTOR STATUS ---------- */
 
 async function loadDoctorStatus(){
-
-const d=await fetch(API+"/doctor/status")
-.then(r=>r.json());
+const d=await fetch(API+"/doctor/status").then(r=>r.json());
 
 doctorStatus.innerHTML=
 `Status: ${d.doctorStatus}<br>Delay: ${d.delayMinutes} mins`;
+
+if(d.doctorStatus==="AVAILABLE")
+doctorStatus.classList.add("availableGlow");
+else
+doctorStatus.classList.remove("availableGlow");
 }
 
-/* ---------- ANNOUNCEMENT ---------- */
+/* ---------- VOICE ---------- */
 
 function announceTurn(tokenNumber){
-
 speechSynthesis.cancel();
-
 const msg = new SpeechSynthesisUtterance(
 `Token ${tokenNumber}, please proceed to the doctor`
 );
-
 speechSynthesis.speak(msg);
 }
 
-function beep(){
+/* ---------- BEEP ---------- */
 
+function beep(){
 const ctx=new AudioContext();
 const osc=ctx.createOscillator();
-
-osc.frequency.setValueAtTime(800,ctx.currentTime);
+osc.frequency.setValueAtTime(850,ctx.currentTime);
 osc.connect(ctx.destination);
-
 osc.start();
 setTimeout(()=>osc.stop(),300);
 }
@@ -299,30 +304,30 @@ beforeList.innerHTML="No token found";
 return;
 }
 
-const queue=await fetch(API+"/queue")
-.then(r=>r.json());
+const queue=await fetch(API+"/queue").then(r=>r.json());
 
-const myIndex=queue.findIndex(
-p=>p.token===token
-);
+/* 🔥 IMPORTANT: numeric ordering */
+queue.sort((a,b)=>a.token-b.token);
 
-const my=await fetch(
-API+"/patient/"+token
-).then(r=>r.json());
+totalBox.innerHTML="Total Patients Waiting: "+queue.length;
 
-/* announce only when position 1 */
+const myIndex=queue.findIndex(p=>p.token===token);
 
-if(my.position===1 && !announced){
+const my=await fetch(API+"/patient/"+token).then(r=>r.json());
 
+if(!my.position){
+myStatus.innerHTML="Token not found in queue";
+return;
+}
+
+/* announce only when reaching position 1 */
+
+if(my.position===1 && lastPosition!==1){
 beep();
 announceTurn(my.token);
-announced=true;
-
 }
 
-if(my.position!==1){
-announced=false;
-}
+lastPosition=my.position;
 
 myStatus.innerHTML=
 `🎟 Token: <span class="big">${my.token}</span><br>
@@ -330,14 +335,13 @@ myStatus.innerHTML=
 ⏱ Estimated Wait: ${my.estimated_wait_minutes} mins<br>
 👨‍⚕️ Doctor Status: ${my.doctorStatus}`;
 
-const before =
-myIndex>0 ? queue.slice(0,myIndex) : [];
+const before=myIndex>0?queue.slice(0,myIndex):[];
 
 beforeList.innerHTML=
-
 before.length===0
 ? `<div class="tokenCard current">
-✅ You are next!
+🎟 Token ${my.token}
+<span class="servingBadge">SERVING</span>
 </div>`
 : before.map((p,i)=>`
 <div class="tokenCard">
