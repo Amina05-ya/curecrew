@@ -205,10 +205,9 @@ let users = []; // doctors + patients
 // =========================
 
 function reorderQueue() {
-  queue.sort((a, b) =>
-    b.severity - a.severity || a.time - b.time
-  );
+  queue.sort((a, b) => a.token - b.token);
 }
+
 
 // =========================
 // QUEUE REMINDER ENGINE

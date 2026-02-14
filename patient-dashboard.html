@@ -1,61 +1,161 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>🧠 Patient Dashboard</title>
+<title>🏥 Patient Dashboard</title>
 
 <style>
 
-body {
-  font-family: Arial;
-  background:#eef4fb;
-  padding:20px;
-  text-align:center;
+/* ===== BODY ===== */
+
+body{
+margin:0;
+font-family:'Segoe UI',Arial;
+background:#eef4fb;
 }
 
-h1 {
-  color:#1f4fa3;
+/* ===== HEADER ===== */
+
+.header{
+background:linear-gradient(135deg,#2196f3,#00bcd4);
+color:white;
+padding:30px 20px;
+border-bottom-left-radius:30px;
+border-bottom-right-radius:30px;
+box-shadow:0 6px 20px rgba(0,0,0,.2);
 }
 
-.card {
-  background:white;
-  padding:25px;
-  margin:20px auto;
-  width:300px;
-  border-radius:12px;
-  box-shadow:0 4px 10px rgba(0,0,0,0.1);
-  cursor:pointer;
-  font-size:18px;
-  transition:0.2s;
+.profile{
+display:flex;
+align-items:center;
+gap:15px;
 }
 
-.card:hover {
-  transform:scale(1.05);
+.profile img{
+width:60px;
+height:60px;
+border-radius:50%;
+background:white;
 }
 
-.appointment { border-left:6px solid #4CAF50; }
-.queue { border-left:6px solid #2196F3; }
-.history { border-left:6px solid #ff9800; }
+.header h2{
+margin:0;
+}
+
+.header p{
+margin:5px 0 0;
+opacity:.9;
+}
+
+/* ===== MAIN GRID ===== */
+
+.grid{
+display:grid;
+grid-template-columns:repeat(2,1fr);
+gap:20px;
+padding:30px;
+}
+
+.tile{
+padding:30px;
+border-radius:20px;
+color:white;
+font-size:18px;
+font-weight:bold;
+cursor:pointer;
+transition:.3s;
+box-shadow:0 8px 18px rgba(0,0,0,.15);
+}
+
+.tile:hover{
+transform:translateY(-6px);
+box-shadow:0 12px 25px rgba(0,0,0,.25);
+}
+
+/* Individual colors */
+
+.appointment{ background:#2196f3; }
+.queue{ background:#4caf50; }
+.history{ background:#ff9800; }
+.detector{ background:#9c27b0; }
+
+/* ===== BOTTOM SECTION ===== */
+
+.bottom{
+padding:0 30px 30px 30px;
+}
+
+.infoCard{
+background:white;
+padding:20px;
+border-radius:18px;
+margin-bottom:15px;
+box-shadow:0 4px 12px rgba(0,0,0,.1);
+}
+
+.infoCard h4{
+margin:0 0 10px 0;
+color:#1f4fa3;
+}
+
+.reminderBar{
+background:#fff3cd;
+padding:15px;
+border-radius:15px;
+font-size:14px;
+}
 
 </style>
 </head>
 
 <body>
 
-<h1>🧠 Patient Dashboard</h1>
+<!-- HEADER -->
+<div class="header">
 
-<div class="card appointment"
+<div class="profile">
+<img src="https://cdn-icons-png.flaticon.com/512/149/149071.png">
+<div>
+<h2>Welcome back 👋</h2>
+<p>Patient ID: #P1023</p>
+</div>
+</div>
+
+</div>
+
+<!-- MAIN GRID -->
+<div class="grid">
+
+<div class="tile appointment"
 onclick="location='appointment.html'">
-📅 Appointment Booking
+📅 Appointment
 </div>
 
-<div class="card queue"
+<div class="tile queue detector"
 onclick="location='queue.html'">
-🔔 Queue Detector
+🎟️ Queue
 </div>
 
-<div class="card history"
+<div class="tile history"
 onclick="location='history.html'">
-📜 Medical History
+📜 History
+</div>
+
+
+</div>
+
+<!-- BOTTOM SECTION -->
+<div class="bottom">
+
+<div class="infoCard">
+<h4>📌 Upcoming Appointment</h4>
+Dr. Sharma – 3:00 PM<br>
+City Hospital
+</div>
+
+<div class="reminderBar">
+💊 Medicine Reminder: Paracetamol at 4:00 PM
+</div>
+
 </div>
 
 </body>

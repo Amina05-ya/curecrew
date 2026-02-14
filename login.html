@@ -1,22 +1,199 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Login</title>
+<title>Hospital Login</title>
+
+<style>
+
+/* ===== PAGE BACKGROUND ===== */
+
+body{
+margin:0;
+font-family:'Segoe UI',Arial;
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+background:linear-gradient(135deg,#dff5e1,#c8f2d0);
+overflow:hidden;
+}
+
+/* ===== FLOATING MEDICAL ICONS ===== */
+
+.icon{
+position:absolute;
+font-size:36px;
+opacity:.25;
+animation:float 8s ease-in-out infinite;
+}
+
+@keyframes float{
+0%{transform:translateY(0);}
+50%{transform:translateY(-20px);}
+100%{transform:translateY(0);}
+}
+
+.i1{top:8%;left:8%;}
+.i2{top:20%;right:12%;}
+.i3{bottom:12%;left:15%;}
+.i4{bottom:10%;right:8%;}
+.i5{top:50%;left:5%;}
+
+/* ===== LOGIN CONTAINER ===== */
+
+.container{
+display:flex;
+background:white;
+width:800px;
+border-radius:16px;
+box-shadow:0 10px 30px rgba(0,0,0,.12);
+overflow:hidden;
+z-index:1;
+}
+
+/* ===== LEFT PANEL ===== */
+
+.left{
+flex:1;
+background:linear-gradient(135deg,#6bcf91,#3cb371);
+color:white;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+padding:30px;
+}
+
+.left h1{
+margin:10px 0;
+}
+
+.left p{
+text-align:center;
+opacity:.95;
+}
+
+/* ===== RIGHT PANEL ===== */
+
+.right{
+flex:1;
+padding:40px;
+}
+
+.right h2{
+margin-bottom:20px;
+color:#2e7d32;
+}
+
+/* ===== INPUTS ===== */
+
+.input{
+margin-bottom:15px;
+}
+
+.input label{
+font-size:14px;
+color:#555;
+}
+
+.input input{
+width:100%;
+padding:12px;
+border-radius:8px;
+border:1px solid #ccc;
+margin-top:5px;
+font-size:14px;
+}
+
+.input input:focus{
+outline:none;
+border-color:#4caf50;
+}
+
+/* ===== BUTTON ===== */
+
+button{
+width:100%;
+padding:14px;
+background:#4caf50;
+color:white;
+border:none;
+border-radius:8px;
+font-size:16px;
+cursor:pointer;
+transition:.2s;
+}
+
+button:hover{
+background:#2e7d32;
+}
+
+/* ===== FOOTER ===== */
+
+.footer{
+margin-top:12px;
+text-align:center;
+font-size:13px;
+}
+
+.footer a{
+color:#4caf50;
+cursor:pointer;
+}
+
+</style>
 </head>
 
 <body>
 
-<h2>Hospital Login</h2>
+<!-- floating hospital icons -->
 
-<input id="email" placeholder="Email"><br>
-<input id="pass" placeholder="Password"><br>
+<div class="icon i1">🏥</div>
+<div class="icon i2">🩺</div>
+<div class="icon i3">💊</div>
+<div class="icon i4">❤️</div>
+<div class="icon i5">🧬</div>
+
+<!-- LOGIN UI -->
+
+<div class="container">
+
+<div class="left">
+
+<h1>Smart Hospital</h1>
+
+<p>
+Secure patient & doctor portal.<br>
+Appointments • Queue • Health records
+</p>
+
+</div>
+
+<div class="right">
+
+<h2>Login</h2>
+
+<div class="input">
+<label>Email</label>
+<input id="email" placeholder="Enter email">
+</div>
+
+<div class="input">
+<label>Password</label>
+<input id="pass" type="password"
+placeholder="Enter password">
+</div>
 
 <button onclick="login()">Login</button>
 
-<p>
+<div class="footer">
 New user?
 <a href="signup.html">Signup</a>
-</p>
+</div>
+
+</div>
+
+</div>
 
 <script>
 
@@ -24,26 +201,25 @@ const API="http://localhost:3000";
 
 async function login(){
 
- const res = await fetch(API+"/login",{
-  method:"POST",
-  headers:{"Content-Type":"application/json"},
-  body:JSON.stringify({
-   email:email.value,
-   password:pass.value
-  })
- });
+const res=await fetch(API+"/login",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+email:email.value,
+password:pass.value
+})
+});
 
- const data=await res.json();
+const data=await res.json();
 
- if(data.role==="doctor")
-   location="doctor.html";
+if(data.role==="doctor")
+location="doctor.html";
 
- else if(data.role==="patient")
-   location="patient-dashboard.html";
+else if(data.role==="patient")
+location="patient-dashboard.html";
 
-
- else
-   alert(data.message);
+else
+alert(data.message);
 
 }
 

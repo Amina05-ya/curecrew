@@ -1,74 +1,188 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Hospital Appointment</title>
+<title>🏥 Consultation Booking</title>
 
 <style>
+
 body{
-font-family:Arial;
-background:#eef4fb;
-padding:20px;
+font-family:'Segoe UI',Arial;
+margin:0;
+padding:30px;
+background:linear-gradient(135deg,#e8f5e9,#e3f2fd);
 }
 
-h2{
+/* ===== TITLE ===== */
+
+h1{
 text-align:center;
-}
-
-.card{
-background:white;
-padding:20px;
-border-radius:12px;
-margin:10px auto;
-width:420px;
-box-shadow:0 4px 12px rgba(0,0,0,.1);
-}
-
-select,button{
-width:100%;
-padding:10px;
-margin:8px 0;
-font-size:15px;
-}
-
-.result{
-background:#e8f5e9;
-padding:15px;
-border-radius:8px;
-margin-top:12px;
-text-align:center;
-}
-
-.result h1{
-margin:5px 0;
 color:#2e7d32;
 }
 
-.queueBtn{
-background:#2196F3;
+/* ===== CONSULTATION CARD ===== */
+
+.serviceCard{
+background:#4caf50;
 color:white;
-border:none;
-border-radius:6px;
-cursor:pointer;
+width:220px;
+margin:20px auto;
+padding:25px;
+border-radius:18px;
+text-align:center;
+font-size:18px;
+box-shadow:0 10px 20px rgba(0,0,0,.15);
 }
+
+/* ===== BOOKING SECTION ===== */
+
+.booking{
+background:white;
+max-width:600px;
+margin:30px auto;
+padding:30px;
+border-radius:20px;
+box-shadow:0 10px 25px rgba(0,0,0,.12);
+}
+
+/* ===== INPUT ===== */
+
+input[type="date"]{
+width:100%;
+padding:12px;
+border-radius:10px;
+border:1px solid #ccc;
+margin:10px 0 20px 0;
+}
+
+/* ===== DOCTOR CARDS ===== */
+
+.doctors{
+display:flex;
+gap:20px;
+flex-wrap:wrap;
+justify-content:center;
+}
+
+.docCard{
+background:#f5f5f5;
+padding:18px;
+border-radius:15px;
+width:200px;
+cursor:pointer;
+transition:.3s;
+text-align:center;
+}
+
+.docCard:hover{
+transform:scale(1.05);
+}
+
+.docCard.selected{
+border:3px solid #4caf50;
+}
+
+.docCard img{
+width:70px;
+height:70px;
+border-radius:50%;
+margin-bottom:10px;
+}
+
+.rating{
+color:#ffb400;
+}
+
+/* ===== CTA ===== */
+
+.cta{
+margin-top:25px;
+width:100%;
+padding:15px;
+font-size:17px;
+border:none;
+border-radius:12px;
+background:#4caf50;
+color:white;
+cursor:pointer;
+transition:.3s;
+}
+
+.cta:hover{
+background:#2e7d32;
+transform:scale(1.03);
+}
+
+/* ===== RESULT CARD ===== */
+
+.result{
+margin-top:25px;
+padding:20px;
+background:#e8f5e9;
+border-radius:15px;
+text-align:center;
+animation:fadeIn .4s ease;
+}
+
+@keyframes fadeIn{
+from{opacity:0;transform:translateY(10px);}
+to{opacity:1;}
+}
+
+/* ===== BEAUTIFUL TRACK BUTTON ===== */
+
+.trackBtn{
+margin-top:15px;
+padding:14px 22px;
+border:none;
+border-radius:30px;
+font-size:16px;
+font-weight:bold;
+color:white;
+cursor:pointer;
+background:linear-gradient(45deg,#2196f3,#4caf50);
+transition:.3s;
+box-shadow:0 4px 15px rgba(0,0,0,.2);
+}
+
+.trackBtn:hover{
+transform:scale(1.07);
+box-shadow:0 6px 25px rgba(0,0,0,.3);
+}
+
+.trackBtn span{
+display:inline-block;
+animation:pulse 1.2s infinite;
+}
+
+@keyframes pulse{
+0%{transform:translateX(0);}
+50%{transform:translateX(4px);}
+100%{transform:translateX(0);}
+}
+
 </style>
 </head>
 
 <body>
 
-<h2>🏥 Smart Appointment Booking</h2>
+<h1>Consultation Booking</h1>
 
-<div class="card">
+<div class="serviceCard">
+🩺 Consultation
+</div>
 
-<label>City</label>
-<select id="city" onchange="loadHospitals()"></select>
+<div class="booking">
 
-<label>Hospital</label>
-<select id="hospital" onchange="loadDoctors()"></select>
+<label>Select Date</label>
+<input type="date" id="date">
 
-<label>Doctor</label>
-<select id="doctor"></select>
+<h3>Select Doctor</h3>
 
-<button onclick="book()">Book Appointment</button>
+<div class="doctors" id="doctorList"></div>
+
+<button class="cta" onclick="bookAppointment()">
+Confirm Booking
+</button>
 
 <div id="result"></div>
 
@@ -78,100 +192,85 @@ cursor:pointer;
 
 const API="http://localhost:3000";
 
-// ---------- INIT ----------
+let selectedDoctor="";
 
-async function init(){
- const cities=await fetch(API+"/cities").then(r=>r.json());
- city.innerHTML=cities.map(c=>`<option>${c}</option>`).join("");
- loadHospitals();
+const doctors=[
+{ name:"Dr. Sharma", specialty:"Cardiologist" },
+{ name:"Dr. Meena", specialty:"Physician" },
+{ name:"Dr. Khan", specialty:"Neurologist" }
+];
+
+function loadDoctors(){
+
+doctorList.innerHTML=doctors.map(d=>`
+
+<div class="docCard"
+onclick="selectDoctor(this,'${d.name}')">
+
+<img src="https://via.placeholder.com/70">
+
+<b>${d.name}</b><br>
+${d.specialty}<br>
+<span class="rating">⭐⭐⭐⭐⭐</span>
+
+</div>
+
+`).join("");
+
 }
 
-// ---------- LOAD HOSPITALS ----------
+loadDoctors();
 
-async function loadHospitals(){
- const c=city.value;
- const data=await fetch(API+"/hospitals/"+c).then(r=>r.json());
- hospital.innerHTML=data.map(h=>`<option>${h}</option>`).join("");
- loadDoctors();
+function selectDoctor(el,name){
+
+document.querySelectorAll('.docCard')
+.forEach(c=>c.classList.remove('selected'));
+
+el.classList.add('selected');
+
+selectedDoctor=name;
+
 }
 
-// ---------- LOAD DOCTORS ----------
+async function bookAppointment(){
 
-async function loadDoctors(){
- const c=city.value;
- const h=hospital.value;
- const data=await fetch(API+"/doctors/"+c+"/"+h).then(r=>r.json());
- doctor.innerHTML=data.map(d=>`<option>${d}</option>`).join("");
+if(!selectedDoctor){
+alert("Select doctor");
+return;
 }
 
-// ---------- BOOK APPOINTMENT ----------
-
-async function book(){
-
- const payload={
-  city:city.value,
-  hospital:hospital.value,
-  doctor:doctor.value
- };
-
- const res=await fetch(API+"/book-appointment",{
-  method:"POST",
-  headers:{"Content-Type":"application/json"},
-  body:JSON.stringify(payload)
- });
-
- const data=await res.json();
-
- // store token for queue tracking
- localStorage.setItem("patientToken", data.token);
-
- // fallback wait = 0 if backend doesn't send it
-const wait = data.estimated_wait_minutes || 0;
-
-const arrival = new Date(
-  Date.now() + wait * 60000
-);
-
-const arrivalTime = arrival.toLocaleTimeString([], {
-  hour: '2-digit',
-  minute: '2-digit'
+const res=await fetch(API+"/book-appointment",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+service:"Consultation",
+doctor:selectedDoctor,
+date:date.value
+})
 });
 
+const data=await res.json();
 
-
-
+localStorage.setItem("patientToken",data.token);
 
 result.innerHTML=`
+
 <div class="result">
-
 ✅ Appointment Confirmed<br><br>
+🎟 Token: <b>${data.token}</b><br>
 
-🎟 Token Number:<br>
-<h1>${data.token}</h1>
+<button class="trackBtn"
+onclick="location='queue.html'">
 
-🏥 Please arrive at:<br>
-<h3>${arrivalTime}</h3>
+🔔 Track Queue <span>➜</span>
 
-<br>
-
-<button class="queueBtn"
-onclick="goQueue()">
-🔔 Track Queue
 </button>
 
 </div>
+
 `;
 
 }
-
-// ---------- GO TO QUEUE ----------
-
-function goQueue(){
- window.location="queue.html";
-}
-
-// start
-init();
 
 </script>
 

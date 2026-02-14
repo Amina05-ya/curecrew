@@ -1,94 +1,119 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>🏥 Smart Hospital Login</title>
+<title>Smart Hospital Portal</title>
 
 <style>
-body {
-  font-family: Arial;
-  background: linear-gradient(135deg,#4f8df5,#1f4fa3);
-  text-align:center;
-  padding-top:120px;
-  color:white;
+
+body{
+margin:0;
+font-family:'Segoe UI',Arial;
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+background:linear-gradient(135deg,#a8e6cf,#dcedc1);
+overflow:hidden;
 }
 
-.card {
-  background:white;
-  color:black;
-  width:300px;
-  margin:auto;
-  padding:20px;
-  border-radius:10px;
+/* Floating medical icons */
+
+.icon{
+position:absolute;
+font-size:40px;
+opacity:.2;
+animation:float 8s infinite ease-in-out;
 }
 
-input {
-  padding:10px;
-  margin:8px;
-  width:90%;
+@keyframes float{
+0%{transform:translateY(0);}
+50%{transform:translateY(-20px);}
+100%{transform:translateY(0);}
 }
 
-button {
-  padding:10px;
-  margin-top:10px;
-  width:100%;
-  border:none;
-  background:#4CAF50;
-  color:white;
-  font-weight:bold;
-  cursor:pointer;
+.i1{top:10%;left:10%;}
+.i2{top:20%;right:15%;}
+.i3{bottom:15%;left:20%;}
+.i4{bottom:10%;right:10%;}
+.i5{top:50%;left:5%;}
+
+/* Main container */
+
+.container{
+background:white;
+padding:50px;
+width:500px;
+border-radius:20px;
+box-shadow:0 15px 40px rgba(0,0,0,.15);
+text-align:center;
+z-index:1;
 }
+
+h1{
+margin-bottom:30px;
+color:#2e7d32;
+}
+
+/* Role buttons */
+
+.roleBtn{
+width:100%;
+padding:18px;
+margin:15px 0;
+border:none;
+border-radius:15px;
+font-size:18px;
+cursor:pointer;
+transition:.3s;
+color:white;
+}
+
+.patient{
+background:linear-gradient(135deg,#4caf50,#2e7d32);
+}
+
+.doctor{
+background:linear-gradient(135deg,#2196f3,#1565c0);
+}
+
+.roleBtn:hover{
+transform:scale(1.05);
+box-shadow:0 8px 20px rgba(0,0,0,.2);
+}
+
 </style>
 </head>
 
 <body>
 
-<h1>🏥 Smart Hospital System</h1>
+<!-- Floating icons -->
+<div class="icon i1">🏥</div>
+<div class="icon i2">🩺</div>
+<div class="icon i3">💊</div>
+<div class="icon i4">❤️</div>
+<div class="icon i5">🧬</div>
 
-<div class="card">
+<div class="container">
 
-<h3>Login</h3>
+<h1>🏥 Smart Hospital Portal</h1>
 
-<input id="email" placeholder="Email"><br>
-<input id="pass" type="password" placeholder="Password"><br>
+<button class="roleBtn patient"
+onclick="location='login.html'">
+👤 Continue as Patient
+</button>
 
-<button onclick="login()">Login</button>
+<button class="roleBtn doctor"
+onclick="location='doctor-login.html'">
+👨‍⚕ Continue as Doctor
+</button>
 
-<p>
-New user?
-<a href="signup.html">Signup here</a>
-</p>
-
+<div class="footer">
+New Doctor?
+<a href="doctor-signup.html">Create Account</a>
 </div>
 
-<script>
 
-const API="http://localhost:3000";
-
-async function login(){
-
- const res = await fetch(API+"/login",{
-  method:"POST",
-  headers:{"Content-Type":"application/json"},
-  body:JSON.stringify({
-   email:email.value,
-   password:pass.value
-  })
- });
-
- const data=await res.json();
-
- if(data.role==="doctor")
-   location="doctor.html";
-
- else if(data.role==="patient")
-   location="patient-dashboard.html";
-
- else
-   alert(data.message);
-
-}
-
-</script>
+</div>
 
 </body>
 </html>

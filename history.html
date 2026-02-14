@@ -6,40 +6,88 @@
 <style>
 
 body{
+margin:0;
 font-family:Arial;
-background:#eef4fb;
+background:linear-gradient(135deg,#c3f0ca,#b6e3ff);
 padding:20px;
 }
 
+/* SECTION TITLE */
 h2{
 text-align:center;
+margin:25px 0 10px;
 }
 
+/* CARD STYLE */
 .card{
 background:white;
-padding:15px;
-border-radius:10px;
-margin:10px auto;
+padding:20px;
+border-radius:16px;
+margin:15px auto;
 width:420px;
-box-shadow:0 2px 6px rgba(0,0,0,.1);
+max-width:95%;
+box-shadow:0 8px 20px rgba(0,0,0,.12);
+transition:0.3s;
 }
 
-input,button{
+.card:hover{
+transform:translateY(-4px);
+}
+
+/* INPUTS */
+input{
 width:100%;
 padding:10px;
 margin:6px 0;
-border-radius:6px;
+border-radius:10px;
 border:1px solid #ccc;
+box-sizing:border-box;
+font-size:14px;
 }
 
+/* BUTTONS */
 button{
-background:#2196f3;
-color:white;
+width:100%;
+padding:10px;
+margin-top:10px;
+border-radius:10px;
+border:none;
 cursor:pointer;
+font-weight:bold;
+transition:0.2s;
 }
 
+button:hover{
+transform:scale(1.05);
+}
+
+.addBtn{
+background:#4CAF50;
+color:white;
+}
+
+.takeBtn{
+background:#ff5722;
+color:white;
+margin-top:12px;
+}
+
+/* MEDICINE CARD */
 .medicine{
-background:#e3f2fd;
+background:#e8f5e9;
+position:relative;
+}
+
+/* ACTIVE REMINDER */
+.reminderActive{
+border:3px solid red;
+animation:glow 1s infinite;
+}
+
+@keyframes glow{
+0%{box-shadow:0 0 5px red;}
+50%{box-shadow:0 0 20px red;}
+100%{box-shadow:0 0 5px red;}
 }
 
 </style>
@@ -56,19 +104,16 @@ background:#e3f2fd;
 <div class="card">
 
 <input id="medName" placeholder="Medicine name">
-
 <input id="medDose" placeholder="Dosage (ex: 500mg)">
+<input id="medInterval" type="number" placeholder="Interval in minutes">
 
-<input id="medInterval" type="number"
-placeholder="Interval in minutes">
-
-<button onclick="addMedicine()">
+<button class="addBtn" onclick="addMedicine()">
 ➕ Add Medicine Reminder
 </button>
 
 </div>
 
-<h2>💊 Medicine Reminders</h2>
+<h2>💊 Active Medicine Reminders</h2>
 
 <div id="medList"></div>
 
@@ -76,38 +121,72 @@ placeholder="Interval in minutes">
 
 const API="http://localhost:3000";
 
-let spoken=[];
+let activeAlarms = {};
+let triggered = {};
 
-// ---------- voice helper ----------
-
+/* VOICE */
 function speak(text){
-
+speechSynthesis.cancel();
 const msg=new SpeechSynthesisUtterance(text);
+msg.rate=1;
+msg.pitch=1;
 speechSynthesis.speak(msg);
-
 }
 
-// ---------- add medicine ----------
+/* BEEP */
+function beep(){
+const ctx=new AudioContext();
+const osc=ctx.createOscillator();
+osc.frequency.setValueAtTime(750,ctx.currentTime);
+osc.connect(ctx.destination);
+osc.start();
+setTimeout(()=>osc.stop(),300);
+}
 
+/* START ALARM */
+function startAlarm(id,message){
+
+if(activeAlarms[id]) return;
+
+activeAlarms[id]=setInterval(()=>{
+beep();
+speak(message);
+},4000);
+
+const card=document.getElementById("med-"+id);
+if(card) card.classList.add("reminderActive");
+}
+
+/* STOP ALARM */
+function stopAlarm(id){
+
+if(activeAlarms[id]){
+clearInterval(activeAlarms[id]);
+delete activeAlarms[id];
+}
+
+speechSynthesis.cancel();
+
+const card=document.getElementById("med-"+id);
+if(card) card.classList.remove("reminderActive");
+}
+
+/* ADD MEDICINE */
 async function addMedicine(){
 
-const name=medName.value;
-const dosage=medDose.value;
-const interval=medInterval.value;
+const name=medName.value.trim();
+const dosage=medDose.value.trim();
+const interval=parseInt(medInterval.value);
 
-if(!name || !dosage || !interval){
-alert("Fill all fields");
+if(!name || !dosage || !interval || interval<=0){
+alert("Please enter valid details");
 return;
 }
 
 await fetch(API+"/medicine",{
 method:"POST",
 headers:{"Content-Type":"application/json"},
-body:JSON.stringify({
-name,
-dosage,
-interval
-})
+body:JSON.stringify({name,dosage,interval})
 });
 
 medName.value="";
@@ -115,32 +194,30 @@ medDose.value="";
 medInterval.value="";
 
 loadMedicines();
-
 }
 
-// ---------- load medicines ----------
-
+/* LOAD MEDICINES */
 async function loadMedicines(){
 
 const meds=await fetch(API+"/medicines")
 .then(r=>r.json());
 
 if(!meds.length){
-medList.innerHTML=
-`<div class="card">No medicines yet</div>`;
+medList.innerHTML="<div class='card'>No medicines yet</div>";
 return;
 }
 
 medList.innerHTML=meds.map(m=>`
 
-<div class="card medicine">
+<div class="card medicine" id="med-${m.id}">
 
-💊 ${m.name}<br>
+💊 <b>${m.name}</b><br>
 Dosage: ${m.dosage}<br>
 Interval: every ${m.interval} min<br>
 Status: ${m.status}
 
-<button onclick="markTaken('${m.id}')">
+<button class="takeBtn"
+onclick="markTaken('${m.id}')">
 ✅ Mark Taken
 </button>
 
@@ -150,73 +227,65 @@ Status: ${m.status}
 
 }
 
-// ---------- mark taken ----------
-
+/* MARK TAKEN */
 async function markTaken(id){
+
+stopAlarm(id);
+delete triggered[id];
 
 await fetch(API+"/medicine/taken/"+id,{
 method:"POST"
 });
 
 loadMedicines();
-
 }
 
-// ---------- check reminders ----------
-
+/* CHECK REMINDERS */
 async function checkReminders(){
 
-const list=await fetch(API+
-"/medicine-reminders")
+const list=await fetch(API+"/medicine-reminders")
 .then(r=>r.json());
 
 list.forEach(r=>{
 
-const id=r.medicine+r.time;
+const id=r.medicine; // backend stable id
 
-if(!spoken.includes(id)){
-
-alert("💊 "+r.message);
-speak(r.message);
-
-spoken.push(id);
-
+if(!triggered[id]){
+startAlarm(id,r.message);
+triggered[id]=true;
 }
 
 });
-
 }
 
-// ---------- demo history ----------
-
+/* HISTORY (demo) */
 function loadHistory(){
 
 history.innerHTML=`
 
 <div class="card">
-Disease: Fever<br>
-Treatment: Antibiotics<br>
-Doctor: Dr. Sharma
+🩺 Disease: Fever<br>
+💊 Treatment: Antibiotics<br>
+👨‍⚕️ Doctor: Dr. Sharma
 </div>
 
 <div class="card">
-Disease: Cold<br>
-Treatment: Rest + Fluids<br>
-Doctor: Dr. Meena
+🩺 Disease: Cold<br>
+💊 Treatment: Rest + Fluids<br>
+👨‍⚕️ Doctor: Dr. Meena
 </div>
 
 `;
 
 }
 
-// ---------- live loop ----------
-
+/* LOOP */
 setInterval(()=>{
 loadMedicines();
 checkReminders();
 },5000);
 
-// initial load
+/* INITIAL LOAD */
 loadHistory();
 loadMedicines();
 

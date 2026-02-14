@@ -1,96 +1,181 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Doctor + Queue Live System</title>
+<title>✨ Smart Doctor + Queue Live System</title>
 
 <style>
 
+/* ================= BACKGROUND ================= */
+
 body{
 margin:0;
-font-family:Arial;
-background:#eef4fb;
+font-family:'Segoe UI',Arial;
+background:linear-gradient(135deg,#c3ecff,#e0c3fc);
+overflow:hidden;
 }
+
+/* floating medical shapes */
+
+.shape{
+position:absolute;
+border-radius:50%;
+background:rgba(255,255,255,0.25);
+backdrop-filter:blur(15px);
+animation:float 10s infinite ease-in-out;
+z-index:-1;
+}
+
+.s1{width:200px;height:200px;top:5%;left:5%;}
+.s2{width:150px;height:150px;bottom:10%;right:10%;animation-delay:2s;}
+.s3{width:100px;height:100px;top:40%;right:20%;animation-delay:4s;}
+
+@keyframes float{
+0%{transform:translateY(0);}
+50%{transform:translateY(-25px);}
+100%{transform:translateY(0);}
+}
+
+/* ================= LAYOUT ================= */
 
 .container{
 display:flex;
 height:100vh;
+padding:20px;
+gap:20px;
 }
 
-/* ---------- DOCTOR PANEL ---------- */
+/* ================= DOCTOR PANEL ================= */
 
 .doctorPanel{
 width:35%;
-background:white;
-padding:20px;
-box-shadow:4px 0 12px rgba(0,0,0,.1);
+background:rgba(255,255,255,0.6);
+backdrop-filter:blur(20px);
+border-radius:20px;
+padding:25px;
+box-shadow:0 10px 30px rgba(0,0,0,.2);
 overflow:auto;
+transition:.3s;
 }
+
+.doctorPanel:hover{
+transform:translateY(-5px);
+}
+
+.doctorPanel h2{
+text-align:center;
+background:linear-gradient(45deg,#2196f3,#4caf50);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+}
+
+/* ================= BUTTONS ================= */
 
 button{
 width:100%;
 padding:14px;
-margin:8px 0;
+margin:10px 0;
 border:none;
-border-radius:8px;
+border-radius:30px;
 font-size:16px;
 cursor:pointer;
+transition:.3s;
+color:white;
+font-weight:bold;
 }
 
-.available{background:#4caf50;color:white;}
-.emergency{background:#f44336;color:white;}
-.break{background:#ff9800;color:white;}
-.call{background:#2196f3;color:white;}
+button:hover{
+transform:scale(1.05);
+box-shadow:0 6px 20px rgba(0,0,0,.2);
+}
+
+.available{background:linear-gradient(45deg,#4caf50,#66bb6a);}
+.emergency{background:linear-gradient(45deg,#f44336,#e57373);}
+.break{background:linear-gradient(45deg,#ff9800,#ffb74d);}
+.call{background:linear-gradient(45deg,#2196f3,#64b5f6);}
+
+/* ================= STATUS BOX ================= */
 
 .statusBox{
-background:#f5f5f5;
-padding:10px;
-border-radius:8px;
-margin-top:10px;
+background:white;
+padding:12px;
+border-radius:12px;
+margin-top:15px;
+box-shadow:0 4px 12px rgba(0,0,0,.1);
+font-weight:bold;
 }
 
-/* ---------- QUEUE PANEL ---------- */
+/* ================= QUEUE PANEL ================= */
 
 .queuePanel{
 flex:1;
-padding:20px;
+background:rgba(255,255,255,0.6);
+backdrop-filter:blur(20px);
+border-radius:20px;
+padding:25px;
+box-shadow:0 10px 30px rgba(0,0,0,.2);
 overflow:auto;
+transition:.3s;
 }
+
+.queuePanel:hover{
+transform:translateY(-5px);
+}
+
+.queuePanel h2{
+text-align:center;
+background:linear-gradient(45deg,#2e7d32,#2196f3);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+}
+
+/* ================= QUEUE CARD ================= */
 
 .card{
 background:white;
-padding:20px;
-border-radius:12px;
+padding:25px;
+border-radius:20px;
 margin:auto;
-max-width:500px;
-box-shadow:0 4px 12px rgba(0,0,0,.1);
+max-width:520px;
+box-shadow:0 8px 20px rgba(0,0,0,.15);
 }
 
 .big{
-font-size:28px;
+font-size:36px;
 font-weight:bold;
 color:#2e7d32;
 }
 
-.section{margin-top:15px;}
+/* ================= TOKEN CARDS ================= */
 
 .tokenCard{
-background:#f5f5f5;
-padding:10px;
-margin:6px 0;
-border-radius:8px;
+padding:12px;
+margin:8px 0;
+border-radius:12px;
+background:#e3f2fd;
+transition:.3s;
+}
+
+.tokenCard:hover{
+transform:translateX(5px);
 }
 
 .current{
-background:#ffccbc;
+background:#c8e6c9;
+border-left:6px solid #2e7d32;
 font-weight:bold;
 }
 
-h2{text-align:center;}
+.section{margin-top:20px;}
 
 </style>
 </head>
 
 <body>
+
+<!-- Floating Shapes -->
+<div class="shape s1"></div>
+<div class="shape s2"></div>
+<div class="shape s3"></div>
 
 <div class="container">
 
@@ -98,7 +183,7 @@ h2{text-align:center;}
 
 <div class="doctorPanel">
 
-<h2>👨‍⚕️ Doctor Control</h2>
+<h2>👨‍⚕️ Doctor Control Panel</h2>
 
 <button class="available"
 onclick="setStatus('AVAILABLE',0)">
@@ -128,14 +213,14 @@ onclick="callNext()">
 
 <div class="queuePanel">
 
-<h2>🔔 Live Queue Status</h2>
+<h2>🔔 Live Queue Tracker</h2>
 
 <div class="card">
 
 <div id="myStatus"></div>
 
 <div class="section">
-<h3>Tokens Before You</h3>
+<h3>Patients Before You</h3>
 <div id="beforeList"></div>
 </div>
 
@@ -149,6 +234,8 @@ onclick="callNext()">
 
 const API="http://localhost:3000";
 const token = Number(localStorage.getItem("patientToken"));
+
+let announced=false;
 
 /* ---------- DOCTOR CONTROL ---------- */
 
@@ -164,21 +251,43 @@ loadDoctorStatus();
 }
 
 async function callNext(){
-
 await fetch(API+"/call-next",{method:"POST"});
 }
 
-/* ---------- DOCTOR STATUS ---------- */
+/* ---------- LOAD DOCTOR STATUS ---------- */
 
 async function loadDoctorStatus(){
 
 const d=await fetch(API+"/doctor/status")
 .then(r=>r.json());
 
-doctorStatus.innerHTML=`
-Status: <b>${d.doctorStatus}</b><br>
-Delay: ${d.delayMinutes} mins
-`;
+doctorStatus.innerHTML=
+`Status: ${d.doctorStatus}<br>Delay: ${d.delayMinutes} mins`;
+}
+
+/* ---------- ANNOUNCEMENT ---------- */
+
+function announceTurn(tokenNumber){
+
+speechSynthesis.cancel();
+
+const msg = new SpeechSynthesisUtterance(
+`Token ${tokenNumber}, please proceed to the doctor`
+);
+
+speechSynthesis.speak(msg);
+}
+
+function beep(){
+
+const ctx=new AudioContext();
+const osc=ctx.createOscillator();
+
+osc.frequency.setValueAtTime(800,ctx.currentTime);
+osc.connect(ctx.destination);
+
+osc.start();
+setTimeout(()=>osc.stop(),300);
 }
 
 /* ---------- QUEUE TRACKER ---------- */
@@ -190,25 +299,36 @@ beforeList.innerHTML="No token found";
 return;
 }
 
-const queue = await fetch(API+"/queue")
+const queue=await fetch(API+"/queue")
 .then(r=>r.json());
 
-const myIndex = queue.findIndex(
+const myIndex=queue.findIndex(
 p=>p.token===token
 );
 
-const my = await fetch(
+const my=await fetch(
 API+"/patient/"+token
 ).then(r=>r.json());
 
-myStatus.innerHTML=`
+/* announce only when position 1 */
 
-🎟 Token: <span class="big">${my.token}</span><br>
+if(my.position===1 && !announced){
+
+beep();
+announceTurn(my.token);
+announced=true;
+
+}
+
+if(my.position!==1){
+announced=false;
+}
+
+myStatus.innerHTML=
+`🎟 Token: <span class="big">${my.token}</span><br>
 📍 Position: ${my.position}<br>
 ⏱ Estimated Wait: ${my.estimated_wait_minutes} mins<br>
-👨‍⚕️ Doctor: ${my.doctorStatus}
-
-`;
+👨‍⚕️ Doctor Status: ${my.doctorStatus}`;
 
 const before =
 myIndex>0 ? queue.slice(0,myIndex) : [];
@@ -220,20 +340,15 @@ before.length===0
 ✅ You are next!
 </div>`
 : before.map((p,i)=>`
-
 <div class="tokenCard">
-
 🎟 Token ${p.token}<br>
-📍 Position: ${i+1}<br>
-🔄 Waiting...
-
+📍 Position: ${i+1}
 </div>
-
 `).join("");
 
 }
 
-/* ---------- LIVE REFRESH ---------- */
+/* ---------- AUTO REFRESH ---------- */
 
 setInterval(()=>{
 loadQueue();
@@ -247,4 +362,3 @@ loadDoctorStatus();
 
 </body>
 </html>
-

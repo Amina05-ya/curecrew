@@ -1,26 +1,149 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Doctor Signup</title>
+<title>👨‍⚕ Doctor Signup</title>
 
 <style>
-body{font-family:Arial;background:#eef4fb;padding:20px;}
-.card{background:white;padding:20px;border-radius:12px;width:350px;margin:auto;}
-input,button{width:100%;padding:10px;margin:6px 0;}
+
+/* ===== BACKGROUND ===== */
+
+body{
+font-family:'Segoe UI',Arial;
+margin:0;
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+background:linear-gradient(135deg,#dff5e1,#c8f2d0);
+overflow:hidden;
+}
+
+/* floating medical icons */
+
+.icon{
+position:absolute;
+font-size:34px;
+opacity:.25;
+animation:float 8s ease-in-out infinite;
+}
+
+@keyframes float{
+0%{transform:translateY(0);}
+50%{transform:translateY(-20px);}
+100%{transform:translateY(0);}
+}
+
+.i1{top:8%;left:8%;}
+.i2{top:20%;right:12%;}
+.i3{bottom:12%;left:15%;}
+.i4{bottom:10%;right:8%;}
+.i5{top:50%;left:5%;}
+
+/* ===== CARD ===== */
+
+.card{
+background:white;
+padding:30px;
+width:380px;
+border-radius:16px;
+box-shadow:0 10px 25px rgba(0,0,0,.12);
+z-index:1;
+}
+
+h2{
+text-align:center;
+color:#2e7d32;
+margin-bottom:20px;
+}
+
+/* ===== INPUTS ===== */
+
+.input{
+margin-bottom:12px;
+}
+
+.input label{
+font-size:14px;
+color:#555;
+}
+
+.input input{
+width:100%;
+padding:11px;
+border-radius:8px;
+border:1px solid #ccc;
+margin-top:5px;
+}
+
+.input input:focus{
+outline:none;
+border-color:#4caf50;
+}
+
+/* ===== BUTTON ===== */
+
+button{
+width:100%;
+padding:14px;
+border:none;
+border-radius:8px;
+background:#4caf50;
+color:white;
+font-weight:bold;
+cursor:pointer;
+transition:.2s;
+}
+
+button:hover{
+background:#2e7d32;
+}
+
+/* ===== MESSAGE ===== */
+
+#msg{
+margin-top:10px;
+text-align:center;
+font-size:14px;
+}
+
+.success{color:#2e7d32;}
+.error{color:red;}
+
 </style>
 </head>
 
 <body>
 
-<h2 align="center">👨‍⚕ Doctor Signup</h2>
+<!-- floating icons -->
+
+<div class="icon i1">🏥</div>
+<div class="icon i2">🩺</div>
+<div class="icon i3">💊</div>
+<div class="icon i4">❤️</div>
+<div class="icon i5">🧬</div>
+
+<!-- SIGNUP CARD -->
 
 <div class="card">
 
-<input id="name" placeholder="Doctor Name">
-<input id="email" placeholder="Email">
-<input id="pass" type="password" placeholder="Password">
+<h2>Doctor Signup</h2>
 
-<button onclick="signup()">Signup</button>
+<div class="input">
+<label>Doctor Name</label>
+<input id="name">
+</div>
+
+<div class="input">
+<label>Email</label>
+<input id="email">
+</div>
+
+<div class="input">
+<label>Password</label>
+<input id="pass" type="password">
+</div>
+
+<button onclick="signup()">Create Account</button>
 
 <div id="msg"></div>
 
@@ -42,11 +165,22 @@ password:pass.value
 })
 });
 
-const data=await res.json();
-msg.innerHTML=data.message;
+const data = await res.json();
 
 if(data.message==="Signup successful"){
-setTimeout(()=>location="doctor-login.html",1000);
+
+msg.innerHTML =
+"<div class='success'>✅ Signup successful! Redirecting...</div>";
+
+setTimeout(()=>{
+location="doctor-login.html";
+},1200);
+
+}else{
+
+msg.innerHTML =
+"<div class='error'>"+data.message+"</div>";
+
 }
 
 }
